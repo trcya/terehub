@@ -1,80 +1,78 @@
--- [[ terehub | Anti-Cheat Tester Panel ]] --
--- UI Library: Rayfield
+-- Memastikan game ter-load sepenuhnya
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
 
+-- Menggunakan Rayfield UI karena WindUI sedang mengalami gangguan server
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "terehub | Anti-Cheat Tester",
-   LoadingTitle = "Loading terehub...",
-   LoadingSubtitle = "by David (Junior Web Dev)",
+   Name = "Admin Tester Panel | David",
+   LoadingTitle = "Menyiapkan Panel Testing...",
+   LoadingSubtitle = "by David",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "terehub_configs",
-      FileName = "tester_config"
-   }
+      FolderName = "DavidScripts",
+      FileName = "TesterPanel"
+   },
+   KeySystem = false -- Set ke true jika ingin menambahkan sistem kunci
 })
 
--- TAB 1: MOVEMENT (Testing Speed/Fly Detection)
-local MoveTab = Window:CreateTab("Movement Test", 4483362458)
+-- Membuat Tab
+local MainTab = Window:CreateTab("Movement", 4483362458) -- Icon ID: Walking
+local VisualTab = Window:CreateTab("Visuals", 4483345998) -- Icon ID: Eye
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
-MoveTab:CreateSlider({
-   Name = "WalkSpeed Bypass",
-   Info = "Gunakan untuk cek apakah AC menendang pemain saat speed > 16",
-   Range = {16, 500},
+-- [ TAB MOVEMENT ] --
+
+MainTab:CreateSlider({
+   Name = "WalkSpeed",
+   Range = {16, 300},
    Increment = 1,
+   Suffix = "Speed",
    CurrentValue = 16,
+   Flag = "SliderSpeed", 
    Callback = function(Value)
-      if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
           game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
       end
    end,
 })
 
-MoveTab:CreateToggle({
-   Name = "Noclip (Physics Check)",
-   Info = "Cek apakah AC mendeteksi pemain di dalam part/tembok",
-   CurrentValue = false,
+MainTab:CreateSlider({
+   Name = "JumpPower",
+   Range = {50, 500},
+   Increment = 1,
+   Suffix = "Power",
+   CurrentValue = 50,
+   Flag = "SliderJump",
    Callback = function(Value)
-      _G.Noclip = Value
-      game:GetService("RunService").Stepped:Connect(function()
-          if _G.Noclip and game.Players.LocalPlayer.Character then
-              for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                  if part:IsA("BasePart") then part.CanCollide = false end
-              end
-          end
-      end)
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+          game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+          game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+      end
    end,
 })
 
--- TAB 2: TELEPORT (Testing Position/Region AC)
-local TpTab = Window:CreateTab("Teleport Test", 4483345998)
-
-TpTab:CreateButton({
-   Name = "Get TP Tool (Click TP)",
-   Info = "Cek apakah AC mendeteksi perubahan posisi instan (Magnitude check)",
-   Callback = function()
-      local mouse = game.Players.LocalPlayer:GetMouse()
-      local tool = Instance.new("Tool")
-      tool.RequiresHandle = false
-      tool.Name = "terehub TP Tool"
-      tool.Activated:Connect(function()
-          local pos = mouse.Hit.p + Vector3.new(0, 3, 0)
-          game.Players.LocalPlayer.Character:MoveTo(pos)
-      end)
-      tool.Parent = game.Players.LocalPlayer.Backpack
-      Rayfield:Notify({Title = "Tool Added", Content = "Gunakan tool di backpack untuk TP!", Duration = 3})
+local noclipActive = false
+MainTab:CreateToggle({
+   Name = "Noclip Mode",
+   CurrentValue = false,
+   Flag = "ToggleNoclip",
+   Callback = function(Value)
+      noclipActive = Value
    end,
 })
 
--- TAB 3: VISUALS (Testing Instance Detection)
-local VisualTab = Window:CreateTab("Visuals", 4483345998)
+-- [ TAB VISUALS ] --
 
+local espActive = false
 VisualTab:CreateToggle({
    Name = "Player ESP",
-   Info = "Cek apakah AC mendeteksi penambahan objek 'Highlight' pada karakter",
    CurrentValue = false,
+   Flag = "ToggleESP",
    Callback = function(Value)
-      _G.ESP = Value
+      espActive = Value
       if not Value then
           for _, p in pairs(game.Players:GetPlayers()) do
               if p.Character and p.Character:FindFirstChild("Highlight") then
@@ -85,23 +83,48 @@ VisualTab:CreateToggle({
    end,
 })
 
--- LOGIC RUNTIME ESP
-task.spawn(function()
-    while true do
-        if _G.ESP then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
-                    Instance.new("Highlight", p.Character)
+-- [ TAB SETTINGS ] --
+
+SettingsTab:CreateButton({
+   Name = "Rejoin Server",
+   Callback = function()
+      game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+   end,
+})
+
+-- [ LOGIC RUNTIME ] --
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local char = game.Players.LocalPlayer.Character
+    
+    -- Logic Noclip
+    if noclipActive and char then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+
+    -- Logic ESP
+    if espActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character then
+                if not p.Character:FindFirstChild("Highlight") then
+                    local h = Instance.new("Highlight", p.Character)
+                    h.FillColor = Color3.fromRGB(255, 0, 0)
+                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    h.FillTransparency = 0.5
                 end
             end
         end
-        task.wait(1)
     end
 end)
 
+-- Notifikasi Berhasil
 Rayfield:Notify({
-   Title = "terehub Loaded",
-   Content = "Siap untuk testing anti-cheat map!",
+   Title = "David's Panel",
+   Content = "Script berhasil dimuat menggunakan Rayfield UI!",
    Duration = 5,
    Image = 4483345998,
 })
