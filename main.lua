@@ -1,128 +1,107 @@
--- [[ terehub Admin Tester Panel ]] --
--- UI Library: OrionLib
+-- [[ terehub | Anti-Cheat Tester Panel ]] --
+-- UI Library: Rayfield
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Membuat Window Utama
-local Window = OrionLib:MakeWindow({
-    Name = "terehub | Admin Tester Panel", 
-    HidePremium = false, 
-    SaveConfig = true, 
-    ConfigFolder = "terehubConfig",
-    IntroText = "terehub" 
+local Window = Rayfield:CreateWindow({
+   Name = "terehub | Anti-Cheat Tester",
+   LoadingTitle = "Loading terehub...",
+   LoadingSubtitle = "by David (Junior Web Dev)",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "terehub_configs",
+      FileName = "tester_config"
+   }
 })
 
--- [[ TAB MOVEMENT ]] --
-local MainTab = Window:MakeTab({
-    Name = "Movement",
-    Icon = "rbxassetid://4483362458",
-    PremiumOnly = false
+-- TAB 1: MOVEMENT (Testing Speed/Fly Detection)
+local MoveTab = Window:CreateTab("Movement Test", 4483362458)
+
+MoveTab:CreateSlider({
+   Name = "WalkSpeed Bypass",
+   Info = "Gunakan untuk cek apakah AC menendang pemain saat speed > 16",
+   Range = {16, 500},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(Value)
+      if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+          game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
 })
 
-MainTab:AddSlider({
-    Name = "WalkSpeed",
-    Min = 16,
-    Max = 300,
-    Default = 16,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 1,
-    ValueName = "Speed",
-    Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-        end
-    end    
+MoveTab:CreateToggle({
+   Name = "Noclip (Physics Check)",
+   Info = "Cek apakah AC mendeteksi pemain di dalam part/tembok",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.Noclip = Value
+      game:GetService("RunService").Stepped:Connect(function()
+          if _G.Noclip and game.Players.LocalPlayer.Character then
+              for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                  if part:IsA("BasePart") then part.CanCollide = false end
+              end
+          end
+      end)
+   end,
 })
 
-MainTab:AddSlider({
-    Name = "JumpPower",
-    Min = 50,
-    Max = 500,
-    Default = 50,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 1,
-    ValueName = "Power",
-    Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-            game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
-        end
-    end    
+-- TAB 2: TELEPORT (Testing Position/Region AC)
+local TpTab = Window:CreateTab("Teleport Test", 4483345998)
+
+TpTab:CreateButton({
+   Name = "Get TP Tool (Click TP)",
+   Info = "Cek apakah AC mendeteksi perubahan posisi instan (Magnitude check)",
+   Callback = function()
+      local mouse = game.Players.LocalPlayer:GetMouse()
+      local tool = Instance.new("Tool")
+      tool.RequiresHandle = false
+      tool.Name = "terehub TP Tool"
+      tool.Activated:Connect(function()
+          local pos = mouse.Hit.p + Vector3.new(0, 3, 0)
+          game.Players.LocalPlayer.Character:MoveTo(pos)
+      end)
+      tool.Parent = game.Players.LocalPlayer.Backpack
+      Rayfield:Notify({Title = "Tool Added", Content = "Gunakan tool di backpack untuk TP!", Duration = 3})
+   end,
 })
 
-local noclipActive = false
-MainTab:AddToggle({
-    Name = "Noclip Mode",
-    Default = false,
-    Callback = function(Value)
-        noclipActive = Value
-    end
+-- TAB 3: VISUALS (Testing Instance Detection)
+local VisualTab = Window:CreateTab("Visuals", 4483345998)
+
+VisualTab:CreateToggle({
+   Name = "Player ESP",
+   Info = "Cek apakah AC mendeteksi penambahan objek 'Highlight' pada karakter",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.ESP = Value
+      if not Value then
+          for _, p in pairs(game.Players:GetPlayers()) do
+              if p.Character and p.Character:FindFirstChild("Highlight") then
+                  p.Character.Highlight:Destroy()
+              end
+          end
+      end
+   end,
 })
 
--- [[ TAB VISUALS ]] --
-local VisualTab = Window:MakeTab({
-    Name = "Visuals",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-VisualTab:AddToggle({
-    Name = "Player ESP",
-    Default = false,
-    Callback = function(Value)
-        _G.ESP = Value
-        if not Value then
+-- LOGIC RUNTIME ESP
+task.spawn(function()
+    while true do
+        if _G.ESP then
             for _, p in pairs(game.Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("Highlight") then
-                    p.Character.Highlight:Destroy()
+                if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
+                    Instance.new("Highlight", p.Character)
                 end
             end
         end
-    end
-})
-
--- [[ TAB SETTINGS ]] --
-local SettingsTab = Window:MakeTab({
-    Name = "Settings",
-    Icon = "rbxassetid://4483362458",
-    PremiumOnly = false
-})
-
-SettingsTab:AddButton({
-    Name = "Rejoin Server",
-    Callback = function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
-    end
-})
-
-SettingsTab:AddButton({
-    Name = "Destroy UI",
-    Callback = function()
-        OrionLib:Destroy()
-    end
-})
-
--- [[ LOGIC RUNTIME ]] --
-game:GetService("RunService").RenderStepped:Connect(function()
-    local char = game.Players.LocalPlayer.Character
-    if noclipActive and char then
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-    
-    if _G.ESP then
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= game.Players.LocalPlayer and p.Character then
-                if not p.Character:FindFirstChild("Highlight") then
-                    local h = Instance.new("Highlight", p.Character)
-                    h.FillColor = Color3.fromRGB(255, 0, 0)
-                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                end
-            end
-        end
+        task.wait(1)
     end
 end)
 
--- Menjalankan Orion
-OrionLib:Init()
+Rayfield:Notify({
+   Title = "terehub Loaded",
+   Content = "Siap untuk testing anti-cheat map!",
+   Duration = 5,
+   Image = 4483345998,
+})
