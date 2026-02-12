@@ -1,76 +1,79 @@
--- Memastikan game ter-load sepenuhnya
+-- [[ terehub | Admin Tester Panel ]] --
+-- UI Library: Rayfield
+
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
--- Menggunakan Rayfield UI karena WindUI sedang mengalami gangguan server
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Admin Tester Panel | David",
-   LoadingTitle = "Menyiapkan Panel Testing...",
+   Name = "terehub | Anti-Cheat Tester",
+   LoadingTitle = "Loading terehub...",
    LoadingSubtitle = "by David",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "DavidScripts",
-      FileName = "TesterPanel"
+      FolderName = "terehub_configs",
+      FileName = "tester_config"
    },
-   KeySystem = false -- Set ke true jika ingin menambahkan sistem kunci
+   KeySystem = false 
 })
 
--- Membuat Tab
-local MainTab = Window:CreateTab("Movement", 4483362458) -- Icon ID: Walking
-local VisualTab = Window:CreateTab("Visuals", 4483345998) -- Icon ID: Eye
+-- [[ TABS ]] --
+local MoveTab = Window:CreateTab("Movement", 4483362458)
+local VisualTab = Window:CreateTab("Visuals", 4483345998)
+local WorldTab = Window:CreateTab("World/Exploit", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
--- [ TAB MOVEMENT ] --
+-- [[ TAB MOVEMENT ]] --
 
-MainTab:CreateSlider({
+MoveTab:CreateSlider({
    Name = "WalkSpeed",
-   Range = {16, 300},
+   Range = {16, 500},
    Increment = 1,
-   Suffix = "Speed",
    CurrentValue = 16,
-   Flag = "SliderSpeed", 
    Callback = function(Value)
-      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+      if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
           game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
       end
    end,
 })
 
-MainTab:CreateSlider({
+MoveTab:CreateSlider({
    Name = "JumpPower",
    Range = {50, 500},
    Increment = 1,
-   Suffix = "Power",
    CurrentValue = 50,
-   Flag = "SliderJump",
    Callback = function(Value)
-      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+      if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
           game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
           game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
       end
    end,
 })
 
-local noclipActive = false
-MainTab:CreateToggle({
-   Name = "Noclip Mode",
+local infJumpActive = false
+MoveTab:CreateToggle({
+   Name = "Infinite Jump",
    CurrentValue = false,
-   Flag = "ToggleNoclip",
    Callback = function(Value)
-      noclipActive = Value
+      infJumpActive = Value
    end,
 })
 
--- [ TAB VISUALS ] --
+-- Logic Infinite Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJumpActive then
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+-- [[ TAB VISUALS ]] --
 
 local espActive = false
 VisualTab:CreateToggle({
    Name = "Player ESP",
    CurrentValue = false,
-   Flag = "ToggleESP",
    Callback = function(Value)
       espActive = Value
       if not Value then
@@ -83,7 +86,44 @@ VisualTab:CreateToggle({
    end,
 })
 
--- [ TAB SETTINGS ] --
+-- [[ TAB WORLD/EXPLOIT ]] --
+
+local noclipActive = false
+WorldTab:CreateToggle({
+   Name = "Noclip Mode",
+   CurrentValue = false,
+   Callback = function(Value)
+      noclipActive = Value
+   end,
+})
+
+WorldTab:CreateButton({
+   Name = "Click Teleport Tool",
+   Callback = function()
+      local mouse = game.Players.LocalPlayer:GetMouse()
+      local tool = Instance.new("Tool")
+      tool.RequiresHandle = false
+      tool.Name = "terehub TP Tool"
+      tool.Activated:Connect(function()
+          local pos = mouse.Hit.p + Vector3.new(0, 3, 0)
+          game.Players.LocalPlayer.Character:MoveTo(pos)
+      end)
+      tool.Parent = game.Players.LocalPlayer.Backpack
+      Rayfield:Notify({Title = "Tool Added", Content = "Cek Backpack kamu!", Duration = 3})
+   end,
+})
+
+WorldTab:CreateSlider({
+   Name = "Gravity",
+   Range = {0, 196},
+   Increment = 1,
+   CurrentValue = 196,
+   Callback = function(Value)
+      game.Workspace.Gravity = Value
+   end,
+})
+
+-- [[ TAB SETTINGS ]] --
 
 SettingsTab:CreateButton({
    Name = "Rejoin Server",
@@ -92,39 +132,30 @@ SettingsTab:CreateButton({
    end,
 })
 
--- [ LOGIC RUNTIME ] --
+-- [[ LOGIC RUNTIME ]] --
 
 game:GetService("RunService").RenderStepped:Connect(function()
     local char = game.Players.LocalPlayer.Character
-    
-    -- Logic Noclip
     if noclipActive and char then
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
-
-    -- Logic ESP
     if espActive then
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character then
                 if not p.Character:FindFirstChild("Highlight") then
                     local h = Instance.new("Highlight", p.Character)
                     h.FillColor = Color3.fromRGB(255, 0, 0)
-                    h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    h.FillTransparency = 0.5
                 end
             end
         end
     end
 end)
 
--- Notifikasi Berhasil
 Rayfield:Notify({
-   Title = "David's Panel",
-   Content = "Script berhasil dimuat menggunakan Rayfield UI!",
+   Title = "terehub Loaded",
+   Content = "Selamat melakukan testing, David!",
    Duration = 5,
    Image = 4483345998,
 })
