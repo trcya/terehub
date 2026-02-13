@@ -1,5 +1,5 @@
--- [[ terehub | WindUI Fix Edition ]] --
--- Memanggil langsung dari GitHub untuk menghindari 404/Paused Server
+-- [[ terehub | WindUI Fixed Version ]] --
+-- Mengambil source langsung dari GitHub agar tidak 404
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
 
 local Window = WindUI:CreateWindow({
@@ -29,30 +29,22 @@ MainTab:Slider({
     end
 })
 
+local infJump = false
 MainTab:Toggle({
     Title = "Infinite Jump",
-    Callback = function(state) _G.InfJump = state end
+    Callback = function(state) infJump = state end
 })
 
 -- [[ VISUALS ]] --
 local espActive = false
 VisualTab:Toggle({
     Title = "Player ESP",
-    Callback = function(state)
-        espActive = state
-        if not state then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("Highlight") then
-                    p.Character.Highlight:Destroy()
-                end
-            end
-        end
-    end
+    Callback = function(state) espActive = state end
 })
 
--- [[ LOGIC ]] --
+-- [[ LOGIC RUNTIME ]] --
 game:GetService("UserInputService").JumpRequest:Connect(function()
-    if _G.InfJump then 
+    if infJump then 
         game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
     end
 end)
@@ -67,5 +59,3 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 end)
-
-Window:Notify({ Title = "terehub Loaded", Content = "Berhasil memuat via GitHub Source!", Duration = 5 })
