@@ -1,33 +1,62 @@
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+-- [[ terehub | WindUI Pro Edition ]] --
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
 
 local Window = WindUI:CreateWindow({
-    Title = "terehub | Admin Panel",
-    Icon = "rbxassetid://128278170341835", -- ID Ikon pilihanmu
+    Title = "terehub | Admin Tester",
+    Icon = "rbxassetid://4483362458",
     Author = "David",
-    Folder = "terehub_configs", -- Folder untuk menyimpan konfigurasi
+    Folder = "terehub_configs",
     Size = UDim2.fromOffset(580, 460),
     Transparent = true,
-    Theme = "Dark", -- Tema default: "Dark" atau "Light"
-    SideBarWidth = 200,
+    Theme = "Dark",
+    SideBarWidth = 200
 })
 
-local MainTab = Window:Tab({
-    Title = "Movement",
-    Icon = "walking", -- Mendukung Lucide Icons
-})
+-- [[ TABS ]] --
+local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
+local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 
-MainTab:Toggle({
-    Title = "Infinite Jump",
-    Callback = function(state)
-        print("Infinite Jump: ", state)
-        -- Masukkan logika terbang/lompat di sini
-    end,
-})
-
+-- [[ MOVEMENT FEATURES ]] --
 MainTab:Slider({
     Title = "WalkSpeed",
+    Step = 1,
     Value = { Min = 16, Max = 500, Default = 16 },
     Callback = function(v)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
-    end,
+        if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
+        end
+    end
 })
+
+local infJump = false
+MainTab:Toggle({
+    Title = "Infinite Jump",
+    Callback = function(state) infJump = state end
+})
+
+-- [[ VISUAL FEATURES ]] --
+local espActive = false
+VisualTab:Toggle({
+    Title = "Player ESP",
+    Callback = function(state) espActive = state end
+})
+
+-- [[ RUNTIME LOGIC ]] --
+game:GetService("RunService").RenderStepped:Connect(function()
+    if espActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
+                local h = Instance.new("Highlight", p.Character)
+                h.FillColor = Color3.fromRGB(0, 255, 136)
+            end
+        end
+    end
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump then 
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
+    end
+end)
+
+Window:Notify({ Title = "terehub Loaded", Content = "Siap digunakan, David!", Duration = 5 })
