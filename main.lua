@@ -1,233 +1,103 @@
--- =====================================================
-// ANTI-CHEAT STRESS TEST - EXECUTOR VERSION
-// TIDAK ADA RESTRIKSI DEVELOPER - BISA PAKAI AKUN APAPUN
-// =====================================================
+-- [[ terecya | Anti-Cheat Stress Test ]] --
+-- Versi Publik: Tanpa Restriksi Developer
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local RootPart = Character:WaitForChild("HumanoidRootPart")
 
--- ==================== KONFIGURASI TEST ====================
-local CONFIG = {
-    SPEED_ENABLED = true,
-    FLY_ENABLED = true,
-    NOCLIP_ENABLED = true,
-    REMOTE_SPAM_ENABLED = true,
-    TELEPORT_ENABLED = true,
-    INFJUMP_ENABLED = true,
-    HOOK_ENABLED = true,
-    
-    -- Durasi test (detik)
-    DURATION = 3,
-    
-    -- Notifikasi
-    SHOW_NOTIFICATION = true
-}
+-- ==================== KONFIGURASI ====================
+local DURATION = 3 -- Lama setiap test berjalan
 
--- ==================== UTILITY FUNCTIONS ====================
 local function Notify(msg)
-    if CONFIG.SHOW_NOTIFICATION then
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "🧪 ANTI-CHEAT TEST",
-            Text = msg,
-            Duration = 2
-        })
-    end
-    warn("[TEST] " .. msg)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "🧪 TEST: " .. Player.Name,
+        Text = msg,
+        Duration = 3
+    })
+    print("[TEST] " .. msg)
 end
 
--- ==================== 1. SPEED HACK ====================
-local function RunSpeedHack()
-    if not CONFIG.SPEED_ENABLED then return end
-    
-    Notify("Speed Hack: 120 WalkSpeed")
-    local original = Humanoid.WalkSpeed
-    Humanoid.WalkSpeed = 120
-    task.wait(CONFIG.DURATION)
-    Humanoid.WalkSpeed = original
+-- ==================== 1. SPEED TEST ====================
+local function RunSpeed()
+    Notify("Testing Speed (WalkSpeed = 150)")
+    local oldSpeed = Humanoid.WalkSpeed
+    Humanoid.WalkSpeed = 150
+    task.wait(DURATION)
+    Humanoid.WalkSpeed = oldSpeed
 end
 
--- ==================== 2. FLY HACK ====================
-local function RunFlyHack()
-    if not CONFIG.FLY_ENABLED then return end
-    
-    Notify("Fly Hack: BodyVelocity")
+-- ==================== 2. FLY TEST ====================
+local function RunFly()
+    Notify("Testing Fly (BodyVelocity)")
     local bv = Instance.new("BodyVelocity")
-    bv.Velocity = Vector3.new(0, 70, 0)
+    bv.Name = "Test_Fly"
+    bv.Velocity = Vector3.new(0, 50, 0)
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     bv.Parent = RootPart
-    task.wait(CONFIG.DURATION)
+    task.wait(DURATION)
     bv:Destroy()
 end
 
--- ==================== 3. NOCLIP ====================
+-- ==================== 3. TELEPORT TEST ====================
+local function RunTP()
+    Notify("Testing Teleport (500 Studs Up)")
+    local originalPos = RootPart.CFrame
+    RootPart.CFrame = originalPos * CFrame.new(0, 500, 0)
+    task.wait(1)
+    RootPart.CFrame = originalPos
+end
+
+-- ==================== 4. NOCLIP TEST ====================
 local function RunNoclip()
-    if not CONFIG.NOCLIP_ENABLED then return end
-    
-    Notify("Noclip: 3 detik")
+    Notify("Testing Noclip (Stepped Loop)")
+    local startTime = tick()
     local connection
     connection = game:GetService("RunService").Stepped:Connect(function()
-        for _, v in pairs(Character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-            end
-        end
-    end)
-    
-    task.wait(CONFIG.DURATION)
-    connection:Disconnect()
-end
-
--- ==================== 4. REMOTE SPAM ====================
-local function RunRemoteSpam()
-    if not CONFIG.REMOTE_SPAM_ENABLED then return end
-    
-    Notify("Remote Spam: 100 events")
-    
-    -- Cari semua RemoteEvent/Function di ReplicatedStorage
-    local remotes = {}
-    for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            table.insert(remotes, v)
-        end
-    end
-    
-    -- Spam remote pertama yang ditemukan
-    if #remotes > 0 then
-        local remote = remotes[1]
-        for i = 1, 100 do
-            pcall(function()
-                remote:FireServer("ANTICHEAT_TEST_" .. i, math.random(1, 9999))
-            end)
-            task.wait(0.01)
-        end
-    end
-end
-
--- ==================== 5. TELEPORT ====================
-local function RunTeleport()
-    if not CONFIG.TELEPORT_ENABLED then return end
-    
-    Notify("Teleport: 500 stud ke atas")
-    local original = RootPart.CFrame
-    RootPart.CFrame = CFrame.new(original.X, original.Y + 500, original.Z)
-    task.wait(0.5)
-    RootPart.CFrame = original
-end
-
--- ==================== 6. INFINITE JUMP ====================
-local function RunInfiniteJump()
-    if not CONFIG.INFJUMP_ENABLED then return end
-    
-    Notify("Infinite Jump: 30x jump")
-    local jumps = 0
-    local connection = game:GetService("UserInputService").JumpRequest:Connect(function()
-        jumps = jumps + 1
-        if jumps <= 30 then
-            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        else
+        if tick() - startTime > DURATION then
             connection:Disconnect()
-        end
-    end)
-    
-    -- Simulate spacebar spam
-    for i = 1, 30 do
-        task.wait(0.03)
-        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-        task.wait(0.01)
-        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-    end
-end
-
--- ==================== 7. HOOK DETECTION ====================
-local function RunHookTest()
-    if not CONFIG.HOOK_ENABLED then return end
-    
-    Notify("Hook Test: getrawmetatable")
-    local success = pcall(function()
-        local mt = getrawmetatable(game)
-        if mt then
-            setreadonly(mt, false)
-            local old = mt.__namecall
-            mt.__namecall = function(...)
-                return old(...)
+            Notify("Noclip Selesai")
+        else
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
             end
         end
     end)
-    
-    if success then
-        warn("[HOOK] Berhasil - Anti-cheat harusnya deteksi")
-    else
-        warn("[HOOK] Gagal - Mungkin sudah di-protect")
-    end
 end
 
--- ==================== 8. TOOLS DETECTION ====================
-local function RunToolCheck()
-    Notify("Memeriksa anti-cheat...")
-    
-    -- Cek apakah ada anti-cheat script
-    local acDetected = false
-    local acNames = {"AntiCheat", "AC", "Security", "Moderator", "KickSystem", "BanSystem", "Admin", "Adonis"}
-    
-    for _, name in pairs(acNames) do
-        local sc = game:GetService("ServerScriptService"):FindFirstChild(name)
-        local sg = game:GetService("ServerStorage"):FindFirstChild(name)
-        if sc or sg then
-            acDetected = true
-            warn("[ANTI-CHEAT] Terdeteksi: " .. name)
+-- ==================== 5. REMOTE SPAM ====================
+local function RunRemoteSpam()
+    Notify("Testing Remote Spam...")
+    -- Mencari Remote di ReplicatedStorage (yang biasanya ada di map)
+    for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if v:IsA("RemoteEvent") then
+            for i = 1, 50 do
+                v:FireServer("STRESS_TEST", math.random(1, 1000))
+            end
+            break -- Spam satu remote saja sebagai sample
         end
     end
-    
-    if not acDetected then
-        warn("[ANTI-CHEAT] TIDAK TERDETEKSI - Game ini mungkin tidak punya anti-cheat")
-    end
 end
 
--- ==================== EKSEKUSI ====================
-Notify("MULAI TEST ANTI-CHEAT")
-warn("========== ANTI-CHEAT STRESS TEST ==========")
-warn("Player: " .. Player.Name)
-warn("Server: " .. game.JobId)
-warn("============================================")
-
-task.wait(1)
-
--- JALANKAN SEMUA TEST
-RunToolCheck()
-task.wait(0.5)
-
--- Urutan: dari yang paling obvious ke stealthy
-RunSpeedHack()
-task.wait(1)
-
-RunFlyHack()
-task.wait(1)
-
-RunNoclip()
-task.wait(1)
-
-RunTeleport()
-task.wait(1)
-
-RunInfiniteJump()
-task.wait(1)
-
-RunRemoteSpam()
-task.wait(1)
-
-RunHookTest()
-
--- Final report
-task.wait(1)
-warn("========== TEST SELESAI ==========")
-warn("✓ Speed Hack: Selesai")
-warn("✓ Fly Hack: Selesai") 
-warn("✓ Noclip: Selesai")
-warn("✓ Teleport: Selesai")
-warn("✓ Infinite Jump: Selesai")
-warn("✓ Remote Spam: Selesai")
-warn("✓ Hook Test: Selesai")
-warn("==================================")
-warn("CEK SERVER LOG: Apakah Anda di-kick?")
-warn("Jika TIDAK di-kick, anti-cheat Anda BOCOR")
+-- ==================== EKSEKUSI OTOMATIS ====================
+task.spawn(function()
+    Notify("MEMULAI STRESS TEST DALAM 3 DETIK")
+    task.wait(3)
+    
+    RunSpeed()
+    task.wait(2)
+    
+    RunFly()
+    task.wait(2)
+    
+    RunTP()
+    task.wait(2)
+    
+    RunNoclip()
+    task.wait(2)
+    
+    RunRemoteSpam()
+    
+    Notify("SEMUA TEST SELESAI!")
+    warn("Jika kamu TIDAK terdeteksi/kick, berarti Anti-Cheat bocor!")
+end)
