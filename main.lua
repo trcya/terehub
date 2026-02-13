@@ -1,21 +1,17 @@
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
-
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 local Window = WindUI:CreateWindow({
-    Title = "terehub | David",
-    Icon = "rbxassetid://4483362458",
-    Author = "David",
-    Folder = "terehub_configs",
-    Size = UDim2.fromOffset(580, 460),
+    Title = "RockHub - Fish It",
+    Icon = "rbxassetid://116236936447443",
+    Author = "Free Version",
+    Folder = "RockHub",
+    Size = UDim2.fromOffset(600, 360),
+    MinSize = Vector2.new(560, 250),
+    MaxSize = Vector2.new(950, 760),
     Transparent = true,
-    Theme = "Dark",
-    SideBarWidth = 200
-})
-
-local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
-
-MainTab:Button({
-    Title = "Test Button",
-    Callback = function()
-        print("UI Berhasil Muncul!")
-    end
+    Theme = "Rose",
+    Resizable = true,
+    SideBarWidth = 190,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = true,
 })
