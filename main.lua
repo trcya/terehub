@@ -1,69 +1,33 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "RockHub | Purple-Blue Edition",
-   LoadingTitle = "RockHub v2.0",
-   LoadingSubtitle = "by David",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "RockHubConfigs", 
-      FileName = "DavidHub"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "", 
-      RememberJoins = true 
-   },
-   KeySystem = false, -- Ubah ke true jika ingin pakai sistem key
+local Window = WindUI:CreateWindow({
+    Title = "terehub | Admin Panel",
+    Icon = "rbxassetid://128278170341835", -- ID Ikon pilihanmu
+    Author = "David",
+    Folder = "terehub_configs", -- Folder untuk menyimpan konfigurasi
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Dark", -- Tema default: "Dark" atau "Light"
+    SideBarWidth = 200,
 })
 
--- Tab Utama
-local MainTab = Window:CreateTab("🏠 Home", 4483362458) -- Icon ID
-local Section = MainTab:CreateSection("Main Cheats")
-
--- Tombol Contoh: Speed
-local SpeedSlider = MainTab:CreateSlider({
-   Name = "WalkSpeed",
-   Range = {16, 300},
-   Increment = 1,
-   Suffix = "Speed",
-   CurrentValue = 16,
-   Flag = "Slider1", 
-   Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-   end,
+local MainTab = Window:Tab({
+    Title = "Movement",
+    Icon = "walking", -- Mendukung Lucide Icons
 })
 
--- Tombol Contoh: Jump
-local JumpSlider = MainTab:CreateSlider({
-   Name = "JumpPower",
-   Range = {50, 500},
-   Increment = 1,
-   Suffix = "Power",
-   CurrentValue = 50,
-   Flag = "Slider2", 
-   Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-   end,
+MainTab:Toggle({
+    Title = "Infinite Jump",
+    Callback = function(state)
+        print("Infinite Jump: ", state)
+        -- Masukkan logika terbang/lompat di sini
+    end,
 })
 
--- Bagian Info (Sesuai gambar yang kamu mau)
-local InfoTab = Window:CreateTab("📊 Network", 4483362458)
-InfoTab:CreateLabel("Status: Connected")
-InfoTab:CreateLabel("Current: 5.64 kB/s")
-InfoTab:CreateLabel("Average: 7.75 kB/s")
-
-Rayfield:Notify({
-   Title = "RockHub Loaded!",
-   Content = "Selamat datang, David! Script siap digunakan.",
-   Duration = 5,
-   Image = 4483362458,
-   Actions = { 
-      Ignore = {
-         Name = "Okay!",
-         Callback = function()
-            print("User clicked Okay")
-         end
-      },
-   },
+MainTab:Slider({
+    Title = "WalkSpeed",
+    Value = { Min = 16, Max = 500, Default = 16 },
+    Callback = function(v)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
+    end,
 })
