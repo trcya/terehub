@@ -1,18 +1,26 @@
--- [[ terecya | Admin Tester Fixed ]] --
--- Powered by David | Theme: Blue Ocean
+-- [[ terecya | Admin Tester ]] --
+-- Nama File: main.lua
+-- Repo: github.com/trcya/terehub
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+
+if not success or Rayfield == nil then
+    warn("terecya Error: Gagal memuat UI Library. Pastikan koneksi internet stabil.")
+    return
+end
 
 local Window = Rayfield:CreateWindow({
    Name = "terecya | Admin Tester",
-   LoadingTitle = "Loading terecya Hub...",
+   LoadingTitle = "terecya Hub",
    LoadingSubtitle = "by David",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "terecya_configs",
       FileName = "tester_config"
    },
-   Theme = "Ocean" -- Tema Otomatis Berwarna Biru
+   Theme = "Ocean" -- Tema Biru
 })
 
 -- [[ TABS ]] --
@@ -20,13 +28,10 @@ local MainTab = Window:CreateTab("Movement", "walking")
 local VisualTab = Window:CreateTab("Visuals", "eye")
 local WorldTab = Window:CreateTab("Exploits", "zap")
 
--- [[ VARIABLES ]] --
+-- [[ MOVEMENT FEATURES ]] --
 local flyActive = false
 local flySpeed = 50
-local noclipActive = false
-local espActive = false
 
--- [[ MOVEMENT: SPEED & JUMP ]] --
 MainTab:CreateSlider({
    Name = "WalkSpeed Hack",
    Range = {16, 500},
@@ -34,19 +39,9 @@ MainTab:CreateSlider({
    Suffix = "Speed",
    CurrentValue = 16,
    Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-   end,
-})
-
-MainTab:CreateSlider({
-   Name = "JumpPower Hack",
-   Range = {50, 500},
-   Increment = 1,
-   Suffix = "Power",
-   CurrentValue = 50,
-   Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-      game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
    end,
 })
 
@@ -59,7 +54,7 @@ MainTab:CreateToggle({
       local hrp = char and char:FindFirstChild("HumanoidRootPart")
       
       if Value and hrp then
-         local bv = Instance.new("BodyVelocity")
+         local bv = hrp:FindFirstChild("terecya_Fly") or Instance.new("BodyVelocity")
          bv.Name = "terecya_Fly"
          bv.Parent = hrp
          bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
@@ -75,9 +70,18 @@ MainTab:CreateToggle({
    end,
 })
 
+MainTab:CreateSlider({
+   Name = "Fly Speed",
+   Range = {10, 300},
+   Increment = 1,
+   CurrentValue = 50,
+   Callback = function(v) flySpeed = v end
+})
+
 -- [[ VISUALS: ESP ]] --
+local espActive = false
 VisualTab:CreateToggle({
-   Name = "Player ESP (Box & Highlight)",
+   Name = "Player ESP",
    CurrentValue = false,
    Callback = function(Value)
       espActive = Value
@@ -92,8 +96,9 @@ VisualTab:CreateToggle({
 })
 
 -- [[ EXPLOITS: NOCLIP ]] --
+local noclipActive = false
 WorldTab:CreateToggle({
-   Name = "Noclip (Tembus Tembok)",
+   Name = "Noclip",
    CurrentValue = false,
    Callback = function(Value)
       noclipActive = Value
@@ -101,23 +106,29 @@ WorldTab:CreateToggle({
 })
 
 -- [[ RUNTIME LOGIC ]] --
-
--- Loop Noclip & ESP
 game:GetService("RunService").Stepped:Connect(function()
-    -- Noclip Logic
     if noclipActive and game.Players.LocalPlayer.Character then
         for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then 
-                part.CanCollide = false 
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
     
-    -- ESP Logic
     if espActive then
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character then
                 if not p.Character:FindFirstChild("terecya_ESP") then
-                    local h = Instance.new("Highlight")
+                    local h = Instance.new("Highlight", p.Character)
                     h.Name = "terecya_ESP"
-                    h.FillColor = Color3.fromRGB(0, 150, 255) --
+                    h.FillColor = Color3.fromRGB(0, 150, 255)
+                end
+            end
+        end
+    end
+end)
+
+Rayfield:Notify({
+   Title = "terecya Hub Berhasil Dimuat",
+   Content = "Halo David, selamat menguji anti-cheat!",
+   Duration = 5,
+   Image = 4483362458,
+})
