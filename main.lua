@@ -1,85 +1,59 @@
--- [[ terehub | Fluent Edition v6.0 ]] --
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+-- [[ terehub | WindUI Fix Edition ]] --
+-- Memanggil langsung dari GitHub untuk menghindari 404/Paused Server
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
 
-local Window = Fluent:CreateWindow({
+local Window = WindUI:CreateWindow({
     Title = "terehub | Admin Tester",
-    SubTitle = "by David",
-    TabWidth = 160,
+    Icon = "rbxassetid://4483362458",
+    Author = "David",
+    Folder = "terehub_configs",
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = true, -- Efek blur transparan yang keren
+    Transparent = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+    SideBarWidth = 200
 })
 
 -- [[ TABS ]] --
-local Tabs = {
-    Main = Window:AddTab({ Title = "Movement", Icon = "run" }),
-    Visual = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
-    World = Window:AddTab({ Title = "World", Icon = "globe" })
-}
+local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
+local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 
--- [[ MOVEMENT: FLY ANALOG & INF JUMP ]] --
-local flyActive = false
-local flySpeed = 50
-Tabs.Main:AddToggle("FlyToggle", {Title = "Fly (Analog/Camera)", Default = false})
-:OnChanged(function(v)
-    flyActive = v
-    if v then
-        local char = game.Players.LocalPlayer.Character
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local bv = Instance.new("BodyVelocity", hrp)
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        task.spawn(function()
-            while flyActive do
-                bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
-                task.wait()
-            end
-            bv:Destroy()
-        end)
-    end
-end)
-
-Tabs.Main:AddSlider("FlySpeed", {Title = "Fly Speed", Default = 50, Min = 10, Max = 300, Rounding = 1})
-:OnChanged(function(v) flySpeed = v end)
-
-local infJump = false
-Tabs.Main:AddToggle("InfJump", {Title = "Infinite Jump", Default = false})
-:OnChanged(function(v) infJump = v end)
-
--- [[ VISUALS: ESP & FULLBRIGHT ]] --
-local espActive = false
-Tabs.Visual:AddToggle("ESPToggle", {Title = "Player ESP (Highlighter)", Default = false})
-:OnChanged(function(v)
-    espActive = v
-    if not v then
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("Highlight") then
-                p.Character.Highlight:Destroy()
-            end
+-- [[ MOVEMENT ]] --
+MainTab:Slider({
+    Title = "WalkSpeed",
+    Step = 1,
+    Value = { Min = 16, Max = 500, Default = 16 },
+    Callback = function(v)
+        if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
         end
-    end
-end)
-
-Tabs.Visual:AddButton({
-    Title = "Fullbright (Tembus Pandang Cahaya)",
-    Callback = function()
-        game.Lighting.Brightness = 2
-        game.Lighting.ClockTime = 14
-        game.Lighting.GlobalShadows = false
     end
 })
 
--- [[ WORLD: NOCLIP ]] --
-local noclipActive = false
-Tabs.World:AddToggle("NoclipToggle", {Title = "Noclip (Tembus Tembok)", Default = false})
-:OnChanged(function(v) noclipActive = v end)
+MainTab:Toggle({
+    Title = "Infinite Jump",
+    Callback = function(state) _G.InfJump = state end
+})
 
--- [[ LOGIC RUNTIME ]] --
-game:GetService("RunService").Stepped:Connect(function()
-    if noclipActive and game.Players.LocalPlayer.Character then
-        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+-- [[ VISUALS ]] --
+local espActive = false
+VisualTab:Toggle({
+    Title = "Player ESP",
+    Callback = function(state)
+        espActive = state
+        if not state then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("Highlight") then
+                    p.Character.Highlight:Destroy()
+                end
+            end
         end
+    end
+})
+
+-- [[ LOGIC ]] --
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if _G.InfJump then 
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
     end
 end)
 
@@ -88,14 +62,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character and not p.Character:FindFirstChild("Highlight") then
                 local h = Instance.new("Highlight", p.Character)
-                h.FillColor = Color3.fromRGB(0, 120, 255)
+                h.FillColor = Color3.fromRGB(0, 255, 136)
             end
         end
     end
 end)
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJump then game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
-end)
-
-Window:SelectTab(1)
+Window:Notify({ Title = "terehub Loaded", Content = "Berhasil memuat via GitHub Source!", Duration = 5 })
