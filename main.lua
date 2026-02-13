@@ -1,5 +1,5 @@
--- [[ terehub | WindUI Fixed Version ]] --
--- Mengambil source langsung dari GitHub agar tidak 404
+-- [[ terehub | WindUI Fixed & Powered ]] --
+-- Load langsung dari GitHub Source (Anti-Paused/404)
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
 
 local Window = WindUI:CreateWindow({
@@ -16,20 +16,41 @@ local Window = WindUI:CreateWindow({
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
+local WorldTab = Window:Tab({ Title = "Exploits", Icon = "zap" })
 
 -- [[ MOVEMENT ]] --
-MainTab:Slider({
-    Title = "WalkSpeed",
-    Step = 1,
-    Value = { Min = 16, Max = 500, Default = 16 },
-    Callback = function(v)
-        if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
+local flyActive = false
+local flySpeed = 50
+local infJump = false
+
+MainTab:Toggle({
+    Title = "Analog Fly (Camera)",
+    Callback = function(state)
+        flyActive = state
+        if state then
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local bv = Instance.new("BodyVelocity", hrp)
+            bv.Name = "terehub_Fly"
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            task.spawn(function()
+                while flyActive do
+                    bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
+                    task.wait()
+                end
+                bv:Destroy()
+            end)
         end
     end
 })
 
-local infJump = false
+MainTab:Slider({
+    Title = "Fly Speed",
+    Step = 1,
+    Value = { Min = 10, Max = 300, Default = 50 },
+    Callback = function(v) flySpeed = v end
+})
+
 MainTab:Toggle({
     Title = "Infinite Jump",
     Callback = function(state) infJump = state end
@@ -42,10 +63,28 @@ VisualTab:Toggle({
     Callback = function(state) espActive = state end
 })
 
--- [[ LOGIC RUNTIME ]] --
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJump then 
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
+VisualTab:Button({
+    Title = "Fullbright",
+    Callback = function()
+        game.Lighting.Brightness = 2
+        game.Lighting.ClockTime = 14
+        game.Lighting.GlobalShadows = false
+    end
+})
+
+-- [[ EXPLOITS ]] --
+local noclipActive = false
+WorldTab:Toggle({
+    Title = "Noclip (Tembus Tembok)",
+    Callback = function(state) noclipActive = state end
+})
+
+-- [[ RUNTIME LOGIC ]] --
+game:GetService("RunService").Stepped:Connect(function()
+    if noclipActive and game.Players.LocalPlayer.Character then
+        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
     end
 end)
 
@@ -57,5 +96,11 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 h.FillColor = Color3.fromRGB(0, 255, 136)
             end
         end
+    end
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump then 
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
     end
 end)
