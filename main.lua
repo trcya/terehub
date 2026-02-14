@@ -1,6 +1,6 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 local Window = WindUI:CreateWindow({
-    Title = "Terehub -   Violence District",
+    Title = "Terehub - Violence District",
     Icon = "rbxassetid://136360402262473",
     Author = "Violence District",
     Folder = "Terehub",
@@ -17,35 +17,47 @@ local Window = WindUI:CreateWindow({
     })
 
 -- [[ TABS ]] --
-local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
-local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
-local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
-local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
+local MainTab = Window:CreateTab({ Title = "Main", Icon = "zap" }) -- Diubah ke CreateTab sesuai WindUI terbaru
+local CombatTab = Window:CreateTab({ Title = "Combat", Icon = "crosshair" })
+local VisualTab = Window:CreateTab({ Title = "Visuals", Icon = "eye" })
+local PlayerTab = Window:CreateTab({ Title = "Players", Icon = "users" })
 
--- [[ MAIN: AUTO PERFECT SKILL CHECK & COLLECTOR ]] --
+-- [[ VARIABLES ]] --
 local autoSkillCheck = false
-MainTab:Toggle({
+local autoGen = false
+local autoAim = false
+local espActive = false
+local espGenPallet = false
+
+-- [[ MAIN: AUTO GENERATOR & SKILL CHECK ]] --
+local mainSection = MainTab:CreateSection("Automation")
+
+mainSection:AddToggle({
     Title = "Auto Perfect Skill Check",
+    Default = true,
     Callback = function(state) autoSkillCheck = state end
 })
 
--- Logic Auto Skill Check (Tepat di Putih)
+mainSection:AddToggle({
+    Title = "Full Auto Generator",
+    Description = "Teleport & Repair Otomatis",
+    Callback = function(state) autoGen = state end
+})
+
+-- Logic Auto Skill Check
 task.spawn(function()
     while true do
         if autoSkillCheck then
-            local pGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-            -- Mencari UI Skill Check di Violence District
-            for _, v in pairs(pGui:GetDescendants()) do
-                if v.Name == "SkillCheck" or v.Name == "Pointer" then 
-                    local needle = v -- Jarum
-                    local successZone = v.Parent:FindFirstChild("SuccessZone") or v.Parent:FindFirstChild("WhiteArea")
-                    
-                    if needle and successZone then
-                        -- Jika posisi jarum masuk ke area sukses, otomatis tekan
-                        if math.abs(needle.Rotation - successZone.Rotation) < 5 then
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+            local pGui = player:FindFirstChild("PlayerGui")
+            if pGui then
+                for _, v in pairs(pGui:GetDescendants()) do
+                    if v.Name == "Pointer" or v.Name == "Needle" then 
+                        local successZone = v.Parent:FindFirstChild("SuccessZone") or v.Parent:FindFirstChild("WhiteArea")
+                        if successZone and math.abs(v.Rotation - successZone.Rotation) < 6 then
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
                             task.wait(0.01)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                            task.wait(0.2)
                         end
                     end
                 end
@@ -55,94 +67,110 @@ task.spawn(function()
     end
 end)
 
-local autoGen = false
-MainTab:Toggle({
-    Title = "Auto Collect Items",
-    Callback = function(state)
-        autoGen = state
-        task.spawn(function()
-            while autoGen do
-                for _, v in pairs(game.Workspace:GetChildren()) do
-                    if v:IsA("Tool") or v.Name == "Scrap" or v.Name == "Item" then
-                        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        local target = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
-                        if hrp and target then
-                            hrp.CFrame = target.CFrame
-                            task.wait(0.2)
-                        end
+-- Logic Auto Generator Teleport
+task.spawn(function()
+    while true do
+        if autoGen and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v.Name:lower():find("generator") then
+                    local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        player.Character.HumanoidRootPart.CFrame = part.CFrame * CFrame.new(0, 3, 0)
+                        local prompt = v:FindFirstChildOfClass("ProximityPrompt")
+                        if prompt then fireproximityprompt(prompt) end
+                        break
                     end
                 end
-                task.wait(1)
             end
-        end)
+        end
+        task.wait(1)
     end
-})
+end)
 
 -- [[ COMBAT: AUTO AIM KILLER ]] --
-local autoAim = false
-CombatTab:Toggle({
+local combatSection = CombatTab:CreateSection("Targeting")
+
+combatSection:AddToggle({
     Title = "Auto Aim (Target Killer)",
     Callback = function(state) autoAim = state end
 })
 
-task.spawn(function()
-    game:GetService("RunService").RenderStepped:Connect(function()
-        if autoAim then
-            for _, p in pairs(game.Players:GetPlayers()) do
-                if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-                    if p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer")) then
-                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character.Head.Position)
-                    end
+RunService.RenderStepped:Connect(function()
+    if autoAim then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                if p.Team and (p.Team.Name:find("Killer") or p.Team.Name:find("Murderer")) then
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character.Head.Position)
                 end
-            end
-        end
-    end)
-end)
-
--- [[ VISUALS: ESP TEAM COLOR ]] --
-local espActive = false
-VisualTab:Toggle({ Title = "ESP Team (Red Killer/White Surv)", Callback = function(s) espActive = s end })
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= game.Players.LocalPlayer and p.Character then
-                local color = (p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer"))) and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
-                
-                local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
-                h.FillColor = color
-
-                local bb = p.Character:FindFirstChild("TereName") or Instance.new("BillboardGui", p.Character)
-                if not p.Character:FindFirstChild("TereName") then
-                    bb.Name = "TereName"; bb.AlwaysOnTop = true; bb.Size = UDim2.new(0, 100, 0, 25); bb.ExtentsOffset = Vector3.new(0, 3, 0)
-                    local lbl = Instance.new("TextLabel", bb); lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1; lbl.TextStrokeTransparency = 0
-                end
-                bb.TextLabel.Text = p.Name; bb.TextLabel.TextColor3 = color
             end
         end
     end
 end)
 
--- [[ PLAYER LIST FIX ]] --
+-- [[ VISUALS: ESP ]] --
+local visualSection = VisualTab:CreateSection("ESP Settings")
+
+visualSection:AddToggle({
+    Title = "ESP Players (Team Color)",
+    Callback = function(state) espActive = state end
+})
+
+visualSection:AddToggle({
+    Title = "ESP Generator & Pallet",
+    Callback = function(state) espGenPallet = state end
+})
+
+-- ESP Logic Loop
+RunService.RenderStepped:Connect(function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local h = p.Character:FindFirstChild("TereHighlight")
+            if espActive then
+                if not h then
+                    h = Instance.new("Highlight", p.Character)
+                    h.Name = "TereHighlight"
+                end
+                local isKiller = p.Team and (p.Team.Name:find("Killer") or p.Team.Name:find("Murderer"))
+                h.FillColor = isKiller and Color3.new(1,0,0) or Color3.new(1,1,1)
+            elseif h then h:Destroy() end
+        end
+    end
+    
+    if espGenPallet then
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v.Name:lower():find("generator") or v.Name:lower():find("pallet") then
+                if not v:FindFirstChild("ObjectHighlight") then
+                    local h = Instance.new("Highlight", v)
+                    h.Name = "ObjectHighlight"
+                    h.FillColor = v.Name:lower():find("generator") and Color3.new(1,1,0) or Color3.new(1,0,1)
+                end
+            end
+        end
+    end
+end)
+
+-- [[ PLAYERS: TELEPORT ]] --
+local playerSection = PlayerTab:CreateSection("Player List")
 local selectedPlayer = ""
+
 local function getPlayers()
     local tbl = {}
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer then table.insert(tbl, p.Name) end
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player then table.insert(tbl, p.Name) end
     end
     return tbl
 end
 
-local PlayerDrop = PlayerTab:Dropdown({
+local PlayerDrop = playerSection:AddDropdown({
     Title = "Select Player",
-    Options = getPlayers(),
+    Values = getPlayers(),
     Callback = function(v) selectedPlayer = v end
 })
 
-PlayerTab:Button({ Title = "Fix Player List", Callback = function() PlayerDrop:SetOptions(getPlayers()) end })
-PlayerTab:Button({ Title = "Teleport", Callback = function()
-    local target = game.Players:FindFirstChild(selectedPlayer)
-    if target and target.Character then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame end
+playerSection:AddButton({ Title = "Refresh List", Callback = function() PlayerDrop:SetValues(getPlayers()) end })
+playerSection:AddButton({ Title = "Teleport", Callback = function()
+    local target = Players:FindFirstChild(selectedPlayer)
+    if target and target.Character then player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame end
 end })
 
-Window:Notify({ Title = "Terehub V10", Content = "Auto Perfect Skill Check Aktif!", Duration = 5 })
+Window:Notify({ Title = "Terehub V10", Content = "Script Ready, David!", Duration = 5 })
