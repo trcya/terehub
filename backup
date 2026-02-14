@@ -143,6 +143,6 @@ Window:Notify({ Title = "Terehub V10", Content = "Auto Perfect Skill Check Aktif
 
 
 
-git add main.lua
+git add .
 git commit -m "update"
 git push origin main
