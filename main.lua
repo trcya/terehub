@@ -1,25 +1,8 @@
---[[
-    TEREHUB - VIOLENCE DISTRICT
-    Integrasi WindUI Indigo David
-    Features: Auto Gen, Skill Check, ESP Gen/Pallet, Combat, Player TP
-]]
-
--- Load WindUI
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-
--- Services
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local player = Players.LocalPlayer
-
--- [[ WINDOW CONFIGURATION ]] --
 local Window = WindUI:CreateWindow({
-    Title = "Terehub",
+    Title = "Terehub - Violence District",
     Icon = "rbxassetid://136360402262473",
-    Author = "David", 
+    Author = "Violence District",
     Folder = "Terehub",
     Size = UDim2.fromOffset(600, 360),
     MinSize = Vector2.new(560, 250),
@@ -31,7 +14,15 @@ local Window = WindUI:CreateWindow({
     BackgroundImageTransparency = 0.42,
     HideSearchBar = false, 
     ScrollBarEnabled = true,
-})
+    })
+
+
+    local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
 
 -- [[ TABS ]] --
 local MainTab = Window:CreateTab({ Title = "Main", Icon = "zap" }) -- Diubah ke CreateTab sesuai WindUI terbaru
