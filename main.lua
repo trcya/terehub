@@ -1,7 +1,7 @@
 --[[
-    Map Testing Script with WindUI
-    Untuk Delta Executor & Executor Lainnya
-    Fitur: Teleport, Speed, Jump, ESP, NoClip, Infinite Yield Tools
+    Terehub Beta - Map Testing Script
+    Warna: Biru Ungu Transparan
+    Untuk Delta Executor
 ]]
 
 -- Load WindUI Library
@@ -13,575 +13,432 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local VirtualUser = game:GetService("VirtualUser")
-
--- Variables
 local player = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
-local noclipConnection = nil
-local infiniteJumpConnection = nil
-local speedConnection = nil
-local espConnections = {}
-local selectedPart = nil
 
--- Player check
-if not player then
-    return
-end
+--[[ KUSTOMISASI WARNA ]]
+-- Warna Biru Ungu Gradient
+local PrimaryColor = Color3.fromRGB(98, 114, 255) -- Biru terang
+local SecondaryColor = Color3.fromRGB(170, 100, 255) -- Ungu
+local AccentColor = Color3.fromRGB(130, 87, 255) -- Biru Ungu campuran
+local BackgroundColor = Color3.fromRGB(15, 10, 25) -- Dark purple background
+local Transparency = 0.15 -- Transparan 15%
 
--- Main Window
+-- Apply warna ke WindUI
+WindUI.Theme:SetPrimary(PrimaryColor)
+WindUI.Theme:SetSecondary(SecondaryColor)
+WindUI.Theme:SetAccent(AccentColor)
+WindUI.Theme:SetBackground(BackgroundColor)
+WindUI.Theme:SetTransparency(Transparency)
+
+-- Main Window dengan judul Terehub Beta
 local Window = WindUI:CreateWindow({
-    Title = "Map Tester",
-    Icon = "map-pin",
-    Author = "Tester",
-    Folder = "MapTester",
-    Size = UDim2.fromOffset(600, 500)
+    Title = "Terehub ฅ^•ﻌ•^ฅ",
+    SubTitle = "Beta Version v0.1",
+    Icon = "cat", -- Ikon kucing
+    Author = "Tere",
+    Folder = "TerehubBeta",
+    Size = UDim2.fromOffset(550, 450),
+    Transparency = Transparency
 })
 
--- Notifikasi Load
+-- Notifikasi Load dengan tema biru ungu
 WindUI:Notify({
-    Title = "Map Tester Loaded",
-    Content = "Tekan RightShift untuk buka/tutup GUI",
-    Duration = 3
+    Title = "Terehub Beta Loaded",
+    Content = "Welcome to Terehub Beta! ฅ^•ﻌ•^ฅ",
+    Duration = 3,
+    Style = {
+        Color = PrimaryColor,
+        Secondary = SecondaryColor
+    }
 })
 
---[[ FUNGSI UTAMA ]]
-
--- Get Character
+--[[ FUNGSI UTILITY ]]
 local function getCharacter()
     return player.Character or player.CharacterAdded:Wait()
 end
 
--- Get HumanoidRootPart
 local function getRoot()
     local char = getCharacter()
     return char and char:FindFirstChild("HumanoidRootPart")
 end
 
--- Get Humanoid
 local function getHumanoid()
     local char = getCharacter()
     return char and char:FindFirstChildOfClass("Humanoid")
 end
 
---[[ TAB UTAMA - MOVEMENT ]]
+--[[ TAB MOVEMENT - KOSONG ]]
 local MovementTab = Window:CreateTab({
     Title = "Movement",
-    Icon = "move"
+    Icon = "move",
+    Description = "Movement features (soon)"
 })
 
--- Speed Slider
-local SpeedSection = MovementTab:CreateSection("Movement Settings")
+-- Section kosong dengan pesan
+local MoveSection = MovementTab:CreateSection("Movement Controls")
+MoveSection:AddBlank()
 
-local speedSlider = MovementTab:CreateSlider({
-    Title = "WalkSpeed",
-    Description = "Atur kecepatan jalan",
-    Icon = "footprints",
-    Min = 16,
-    Max = 250,
-    Default = 16,
-    ValueName = "Speed",
-    Callback = function(value)
-        local humanoid = getHumanoid()
-        if humanoid then
-            humanoid.WalkSpeed = value
-        end
-    end
+MovementTab:CreateLabel({
+    Title = "✨ Coming Soon",
+    Description = "Movement features will be added in next update",
+    Icon = "clock"
 })
 
-local jumpSlider = MovementTab:CreateSlider({
-    Title = "JumpPower",
-    Description = "Atur kekuatan lompat",
-    Icon = "chevrons-up",
-    Min = 50,
-    Max = 350,
-    Default = 50,
-    ValueName = "Power",
-    Callback = function(value)
-        local humanoid = getHumanoid()
-        if humanoid then
-            humanoid.JumpPower = value
-        end
-    end
-})
-
--- Gravity Toggle
-local gravityToggle = MovementTab:CreateToggle({
-    Title = "Low Gravity",
-    Description = "Mengurangi gravitasi",
-    Icon = "moon",
-    Callback = function(value)
-        if value then
-            Workspace.Gravity = 50
-        else
-            Workspace.Gravity = 196.2
-        end
-    end
-})
-
--- Infinite Jump
-local infiniteJumpToggle = MovementTab:CreateToggle({
-    Title = "Infinite Jump",
-    Description = "Lompat berkali-kali di udara",
-    Icon = "repeat",
-    Callback = function(value)
-        if value then
-            if infiniteJumpConnection then
-                infiniteJumpConnection:Disconnect()
-            end
-            infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
-                local humanoid = getHumanoid()
-                if humanoid then
-                    humanoid:ChangeState("Jumping")
-                end
-            end)
-        else
-            if infiniteJumpConnection then
-                infiniteJumpConnection:Disconnect()
-                infiniteJumpConnection = nil
-            end
-        end
-    end
-})
-
--- NoClip
-local noclipToggle = MovementTab:CreateToggle({
-    Title = "NoClip",
-    Description = "Tembus tembok (pake shift lock)",
-    Icon = "slash",
-    Callback = function(value)
-        if value then
-            if noclipConnection then
-                noclipConnection:Disconnect()
-            end
-            noclipConnection = RunService.Stepped:Connect(function()
-                local char = getCharacter()
-                if char then
-                    for _, v in pairs(char:GetDescendants()) do
-                        if v:IsA("BasePart") then
-                            v.CanCollide = false
-                        end
-                    end
-                end
-            end)
-        else
-            if noclipConnection then
-                noclipConnection:Disconnect()
-                noclipConnection = nil
-            end
-            -- Reset collision
-            local char = getCharacter()
-            if char then
-                for _, v in pairs(char:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = true
-                    end
-                end
-            end
-        end
-    end
-})
-
---[[ TAB TELEPORT ]]
-local TeleportTab = Window:CreateTab({
-    Title = "Teleport",
-    Icon = "map"
-})
-
--- Scan Map Section
-local ScanSection = TeleportTab:CreateSection("Map Scanner")
-
--- Scan Button
-TeleportTab:CreateButton({
-    Title = "Scan Map Parts",
-    Description = "Cari semua part di map",
-    Icon = "scan",
+MovementTab:CreateButton({
+    Title = "Speed (Soon)",
+    Description = "WalkSpeed slider coming soon",
+    Icon = "zap",
     Callback = function()
-        local parts = {}
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" and v.Name ~= "Handle" then
-                if #parts < 50 then -- Limit to 50 parts
-                    table.insert(parts, v.Name .. " - " .. string.sub(v.ClassName, 1, 10))
-                end
-            end
-        end
-        
-        -- Buat dropdown dinamis
-        local partDropdown = TeleportTab:CreateDropdown({
-            Title = "Select Part",
-            Description = "Pilih part untuk teleport",
-            Icon = "list",
-            Values = parts,
-            Callback = function(selected)
-                for _, v in pairs(Workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name .. " - " .. string.sub(v.ClassName, 1, 10)) == selected then
-                        selectedPart = v
-                        break
-                    end
-                end
-            end
-        })
-        
         WindUI:Notify({
-            Title = "Scan Complete",
-            Content = "Ditemukan " .. #parts .. " parts",
+            Title = "Info",
+            Content = "Fitur dalam pengembangan!",
             Duration = 2
         })
     end
 })
 
--- Teleport to Selected
-TeleportTab:CreateButton({
-    Title = "Teleport ke Selected",
-    Description = "Pindah ke part yang dipilih",
-    Icon = "target",
+MovementTab:CreateButton({
+    Title = "Jump (Soon)",
+    Description = "JumpPower slider coming soon",
+    Icon = "chevrons-up",
     Callback = function()
-        if selectedPart then
-            local root = getRoot()
-            if root and selectedPart then
-                root.CFrame = CFrame.new(selectedPart.Position + Vector3.new(0, 5, 0))
-                WindUI:Notify({
-                    Title = "Teleported",
-                    Content = "Ke: " .. selectedPart.Name,
-                    Duration = 1.5
-                })
-            end
-        else
-            WindUI:Notify({
-                Title = "Error",
-                Content = "Pilih part dulu!",
-                Duration = 2
-            })
-        end
+        WindUI:Notify({
+            Title = "Info",
+            Content = "Fitur dalam pengembangan!",
+            Duration = 2
+        })
     end
 })
 
--- Teleport to Spawn
-TeleportTab:CreateButton({
-    Title = "Teleport ke Spawn",
-    Description = "Kembali ke spawn point",
-    Icon = "home",
-    Callback = function()
-        local spawns = Workspace:FindFirstChild("SpawnLocation") or Workspace:FindFirstChild("Spawn")
-        if spawns then
-            local root = getRoot()
-            if root then
-                root.CFrame = spawns.CFrame * CFrame.new(0, 5, 0)
-            end
-        else
-            -- Fallback ke posisi 0
-            local root = getRoot()
-            if root then
-                root.CFrame = CFrame.new(0, 50, 0)
-            end
-        end
-    end
+--[[ TAB TELEPORT - KOSONG ]]
+local TeleportTab = Window:CreateTab({
+    Title = "Teleport",
+    Icon = "map-pin",
+    Description = "Teleport features (soon)"
 })
 
--- Waypoints
-local waypoints = {}
+local TeleSection = TeleportTab:CreateSection("Teleport Controls")
+TeleSection:AddBlank()
+
+TeleportTab:CreateLabel({
+    Title = "🚀 In Development",
+    Description = "Teleport tools will be available soon",
+    Icon = "construction"
+})
+
 TeleportTab:CreateButton({
-    Title = "Save Waypoint",
-    Description = "Simpan posisi sekarang",
+    Title = "Save Position (Soon)",
     Icon = "bookmark",
     Callback = function()
-        local root = getRoot()
-        if root then
-            table.insert(waypoints, {
-                name = "Waypoint " .. #waypoints + 1,
-                cframe = root.CFrame
-            })
-            WindUI:Notify({
-                Title = "Saved",
-                Content = "Posisi disimpan",
-                Duration = 1
-            })
-        end
+        WindUI:Notify({
+            Title = "Development",
+            Content = "Fitur teleport sedang dibuat",
+            Duration = 2
+        })
     end
 })
 
--- Load Waypoints (Dynamic)
 TeleportTab:CreateButton({
-    Title = "Load Waypoints",
-    Description = "Teleport ke waypoint tersimpan",
+    Title = "Load Position (Soon)",
     Icon = "book-open",
     Callback = function()
-        if #waypoints == 0 then
-            WindUI:Notify({
-                Title = "No Waypoints",
-                Content = "Save waypoint dulu!",
-                Duration = 2
-            })
-            return
-        end
-        
-        local wpValues = {}
-        for _, wp in pairs(waypoints) do
-            table.insert(wpValues, wp.name)
-        end
-        
-        local wpDropdown = TeleportTab:CreateDropdown({
-            Title = "Select Waypoint",
-            Values = wpValues,
-            Callback = function(selected)
-                for _, wp in pairs(waypoints) do
-                    if wp.name == selected then
-                        local root = getRoot()
-                        if root then
-                            root.CFrame = wp.cframe
-                        end
-                        break
-                    end
-                end
-            end
+        WindUI:Notify({
+            Title = "Development",
+            Content = "Fitur teleport sedang dibuat",
+            Duration = 2
         })
     end
 })
 
---[[ TAB VISUAL/ESP ]]
+--[[ TAB VISUAL - KOSONG ]]
 local VisualTab = Window:CreateTab({
     Title = "Visual",
-    Icon = "eye"
+    Icon = "eye",
+    Description = "Visual features (soon)"
 })
 
--- ESP Functions
-local function clearESP()
-    for _, conn in pairs(espConnections) do
-        conn:Disconnect()
-    end
-    espConnections = {}
-    -- Hapus existing highlights
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("Highlight") and v.Name == "MapESP" then
-            v:Destroy()
-        end
-    end
-end
+local VisSection = VisualTab:CreateSection("Visual Settings")
+VisSection:AddBlank()
 
-local function createESP(part)
-    if not part or not part:IsA("BasePart") then return end
-    
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "MapESP"
-    highlight.Adornee = part
-    highlight.FillColor = Color3.new(0, 1, 0)
-    highlight.OutlineColor = Color3.new(1, 1, 1)
-    highlight.FillTransparency = 0.5
-    highlight.Parent = part
-end
+VisualTab:CreateLabel({
+    Title = "🎨 Coming Soon",
+    Description = "ESP and X-Ray features in progress",
+    Icon = "palette"
+})
 
--- ESP Toggle
-local espToggle = VisualTab:CreateToggle({
-    Title = "ESP Parts",
-    Description = "Highlight semua part di map",
+VisualTab:CreateButton({
+    Title = "ESP (Soon)",
     Icon = "highlighter",
-    Callback = function(value)
-        clearESP()
-        if value then
-            for _, v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("BasePart") and not v:IsDescendantOf(player.Character) then
-                    createESP(v)
-                    -- Tambah connection untuk part baru
-                    local conn = v.ChildAdded:Connect(function(child)
-                        if child:IsA("BasePart") and value then
-                            createESP(child)
-                        end
-                    end)
-                    table.insert(espConnections, conn)
-                end
-            end
-        end
-    end
-})
-
--- X-Ray (Transparansi)
-local xraySlider = VisualTab:CreateSlider({
-    Title = "X-Ray Intensity",
-    Description = "Atur transparansi dinding",
-    Icon = "eye-off",
-    Min = 0,
-    Max = 0.9,
-    Default = 0,
-    ValueName = "Transparansi",
-    Callback = function(value)
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and not v:IsDescendantOf(player.Character) then
-                if value > 0 then
-                    v.Transparency = value
-                else
-                    v.Transparency = 0
-                end
-            end
-        end
-    end
-})
-
---[[ TAB UTILITIES ]]
-local UtilityTab = Window:CreateTab({
-    Title = "Utilities",
-    Icon = "settings"
-})
-
--- Infinite Yield Tools (Basic)
-UtilityTab:CreateButton({
-    Title = "Infinite Yield (F3X)",
-    Description = "Load Infinite Yield tools",
-    Icon = "terminal",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-    end
-})
-
--- F3X (Build Tools)
-UtilityTab:CreateButton({
-    Title = "F3X Build Tools",
-    Description = "Tools untuk build/mengedit",
-    Icon = "box",
-    Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/8bP0LrQs"))()
-    end
-})
-
--- Anti AFK
-local antiAfkToggle = UtilityTab:CreateToggle({
-    Title = "Anti AFK",
-    Description = "Cegah kick karena AFK",
-    Icon = "coffee",
-    Callback = function(value)
-        if value then
-            player.Idled:Connect(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-            WindUI:Notify({
-                Title = "Anti AFK Active",
-                Content = "Kamu tidak akan di-kick karena AFK",
-                Duration = 2
-            })
-        end
-    end
-})
-
--- Reset Character
-UtilityTab:CreateButton({
-    Title = "Reset Character",
-    Description = "Respawn karakter",
-    Icon = "refresh-cw",
-    Callback = function()
-        local humanoid = getHumanoid()
-        if humanoid then
-            humanoid.Health = 0
-        end
-    end
-})
-
--- Get Map Info
-UtilityTab:CreateButton({
-    Title = "Map Information",
-    Description = "Info tentang map",
-    Icon = "info",
-    Callback = function()
-        local partCount = 0
-        local meshCount = 0
-        local unionCount = 0
-        
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") then partCount = partCount + 1 end
-            if v:IsA("MeshPart") then meshCount = meshCount + 1 end
-            if v:IsA("UnionOperation") then unionCount = unionCount + 1 end
-        end
-        
         WindUI:Notify({
-            Title = "Map Info",
-            Content = string.format("Parts: %d | Meshes: %d | Unions: %d", partCount, meshCount, unionCount),
-            Duration = 5
+            Title = "Info",
+            Content = "ESP fitur akan segera hadir!",
+            Duration = 2
         })
     end
 })
 
---[[ TAB ADMIN ]]
-local AdminTab = Window:CreateTab({
-    Title = "Admin",
-    Icon = "shield"
-})
-
--- Admin Commands
-AdminTab:CreateButton({
-    Title = "CMD-X (Admin)",
-    Description = "Load CMD-X admin panel",
-    Icon = "command",
+VisualTab:CreateButton({
+    Title = "X-Ray (Soon)",
+    Icon = "eye-off",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/CMD-X/CMD-X/master/Source"))()
+        WindUI:Notify({
+            Title = "Info",
+            Content = "X-Ray fitur dalam pengembangan",
+            Duration = 2
+        })
     end
 })
 
-AdminTab:CreateButton({
-    Title = "Nameless Admin",
-    Description = "Load Nameless admin",
-    Icon = "users",
+--[[ TAB UTILITIES - KOSONG ]]
+local UtilityTab = Window:CreateTab({
+    Title = "Utilities",
+    Icon = "settings",
+    Description = "Utility features (soon)"
+})
+
+local UtilSection = UtilityTab:CreateSection("Tools")
+UtilSection:AddBlank()
+
+UtilityTab:CreateLabel({
+    Title = "🔧 Under Construction",
+    Description = "Various tools coming in next update",
+    Icon = "wrench"
+})
+
+UtilityTab:CreateButton({
+    Title = "Anti AFK (Soon)",
+    Icon = "coffee",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source"))()
+        WindUI:Notify({
+            Title = "Info",
+            Content = "Fitur Anti AFK sedang dibuat",
+            Duration = 2
+        })
     end
 })
 
---[[ SETTINGS TAB ]]
+UtilityTab:CreateButton({
+    Title = "Reset Character (Soon)",
+    Icon = "refresh-cw",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Info",
+            Content = "Fitur reset dalam pengembangan",
+            Duration = 2
+        })
+    end
+})
+
+--[[ TAB INFO ]]
+local InfoTab = Window:CreateTab({
+    Title = "Info",
+    Icon = "info",
+    Description = "Information about Terehub"
+})
+
+local InfoSection = InfoTab:CreateSection("Terehub Beta Info")
+InfoSection:AddBlank()
+
+-- Info dengan style
+InfoTab:CreateLabel({
+    Title = "ฅ^•ﻌ•^ฅ Terehub Beta",
+    Description = "Version: 0.1 Beta",
+    Icon = "tag"
+})
+
+InfoTab:CreateLabel({
+    Title = "Status",
+    Description = "In Development - Features Coming Soon",
+    Icon = "clock"
+})
+
+InfoTab:CreateLabel({
+    Title = "Creator",
+    Description = "Tere ฅ^•ﻌ•^ฅ",
+    Icon = "heart"
+})
+
+InfoTab:CreateLabel({
+    Title = "Color Theme",
+    Description = "Blue Purple Transparent",
+    Icon = "droplet"
+})
+
+-- Color preview
+local ColorSection = InfoTab:CreateSection("Theme Colors")
+local colorFrame = InfoTab:CreateToggle({
+    Title = "Show Colors",
+    Description = "Preview theme colors",
+    Icon = "palette",
+    Callback = function(state)
+        if state then
+            -- Tampilkan preview warna
+            local colors = {
+                {name = "Primary", color = PrimaryColor},
+                {name = "Secondary", color = SecondaryColor},
+                {name = "Accent", color = AccentColor},
+                {name = "Background", color = BackgroundColor}
+            }
+            
+            for _, col in pairs(colors) do
+                WindUI:Notify({
+                    Title = col.name .. " Color",
+                    Content = "RGB: " .. math.floor(col.color.R * 255) .. ", " .. math.floor(col.color.G * 255) .. ", " .. math.floor(col.color.B * 255),
+                    Duration = 2,
+                    Style = {
+                        Color = col.color
+                    }
+                })
+                wait(0.5)
+            end
+        end
+    end
+})
+
+--[[ TAB SETTINGS ]]
 local SettingsTab = Window:CreateTab({
     Title = "Settings",
-    Icon = "sliders"
+    Icon = "sliders",
+    Description = "Hub settings"
 })
 
--- UI Settings
+local SetSection = SettingsTab:CreateSection("Settings")
+SetSection:AddBlank()
+
+-- UI Toggle
 SettingsTab:CreateButton({
     Title = "Toggle UI",
-    Description = "Sembunyikan/tampilkan UI",
+    Description = "Hide/Show UI (RightShift)",
     Icon = "eye",
     Callback = function()
         WindUI:Toggle()
     end
 })
 
--- Keybind Info
-SettingsTab:CreateButton({
-    Title = "Keybinds",
-    Description = "RightShift = Buka/Tutup UI",
-    Icon = "keyboard",
-    Callback = function()
+-- Transparency Control
+local transSlider = SettingsTab:CreateSlider({
+    Title = "UI Transparency",
+    Description = "Adjust UI transparency",
+    Icon = "droplet",
+    Min = 0,
+    Max = 0.5,
+    Default = Transparency,
+    ValueName = "Opacity",
+    Callback = function(value)
+        WindUI.Theme:SetTransparency(value)
+        -- Update frame transparency
+        for _, v in pairs(player.PlayerGui:GetDescendants()) do
+            if v:IsA("Frame") and v.Name ~= "TopBar" then
+                v.BackgroundTransparency = value
+            end
+        end
+    end
+})
+
+-- Color Theme Selector
+SettingsTab:CreateDropdown({
+    Title = "Theme Color",
+    Description = "Pilih tema warna",
+    Icon = "brush",
+    Values = {"Biru Ungu", "Biru Tua", "Ungu Terang", "Hitam Biru", "Default"},
+    Callback = function(selected)
+        if selected == "Biru Ungu" then
+            WindUI.Theme:SetPrimary(Color3.fromRGB(98, 114, 255))
+            WindUI.Theme:SetSecondary(Color3.fromRGB(170, 100, 255))
+        elseif selected == "Biru Tua" then
+            WindUI.Theme:SetPrimary(Color3.fromRGB(0, 100, 255))
+            WindUI.Theme:SetSecondary(Color3.fromRGB(0, 150, 255))
+        elseif selected == "Ungu Terang" then
+            WindUI.Theme:SetPrimary(Color3.fromRGB(200, 100, 255))
+            WindUI.Theme:SetSecondary(Color3.fromRGB(150, 50, 255))
+        elseif selected == "Hitam Biru" then
+            WindUI.Theme:SetPrimary(Color3.fromRGB(0, 50, 150))
+            WindUI.Theme:SetSecondary(Color3.fromRGB(0, 20, 100))
+        end
+        
         WindUI:Notify({
-            Title = "Keybinds",
-            Content = "RightShift: Toggle UI\nEnd: Close GUI",
-            Duration = 3
+            Title = "Theme Updated",
+            Content = "Color theme changed to " .. selected,
+            Duration = 2
         })
     end
 })
 
--- Unload Script
+-- Reset Settings
 SettingsTab:CreateButton({
-    Title = "Unload Script",
-    Description = "Hapus semua fitur",
+    Title = "Reset Settings",
+    Description = "Kembali ke default",
+    Icon = "rotate-ccw",
+    Callback = function()
+        WindUI.Theme:SetPrimary(PrimaryColor)
+        WindUI.Theme:SetSecondary(SecondaryColor)
+        WindUI.Theme:SetTransparency(Transparency)
+        transSlider:Set(Transparency)
+        
+        WindUI:Notify({
+            Title = "Settings Reset",
+            Content = "Kembali ke tema default",
+            Duration = 2
+        })
+    end
+})
+
+-- Unload
+SettingsTab:CreateButton({
+    Title = "Unload Terehub",
+    Description = "Close and remove all",
     Icon = "power",
     Callback = function()
-        -- Cleanup
-        if noclipConnection then
-            noclipConnection:Disconnect()
-        end
-        if infiniteJumpConnection then
-            infiniteJumpConnection:Disconnect()
-        end
-        clearESP()
-        Workspace.Gravity = 196.2
         WindUI:Destroy()
         script:Destroy()
     end
 })
 
---[[ AUTO EXECUTE ]]
--- Reset speed/jump on respawn
-player.CharacterAdded:Connect(function()
-    local humanoid = getHumanoid()
-    if humanoid then
-        humanoid.WalkSpeed = speedSlider.Value or 16
-        humanoid.JumpPower = jumpSlider.Value or 50
+--[[ KEYBINDS ]]
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        WindUI:Toggle()
+    elseif input.KeyCode == Enum.KeyCode.End then
+        -- Close GUI with End key
+        WindUI:Destroy()
+        script:Destroy()
     end
 end)
 
-print("✅ Map Tester Script Loaded - Tekan RightShift untuk buka GUI")
+--[[ WELCOME MESSAGE ]]
+wait(1)
+WindUI:Notify({
+    Title = "ฅ^•ﻌ•^ฅ Welcome to Terehub Beta!",
+    Content = "Fitur masih kosong, tunggu update selanjutnya!",
+    Duration = 5,
+    Style = {
+        Color = SecondaryColor,
+        Secondary = PrimaryColor
+    }
+})
+
+-- Info di console
+print([[
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    TEREHUB BETA - LOADED
+    Version: 0.1 Beta
+    Theme: Blue Purple Transparent
+    Press RightShift to toggle
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+]])
+
+-- Update judul di bar
+local function updateBar()
+    local bar = player.PlayerGui:FindFirstChild("WindUI")
+    if bar then
+        for _, v in pairs(bar:GetDescendants()) do
+            if v:IsA("TextLabel") and v.Text and v.Text:find("WindUI") then
+                v.Text = "Terehub Beta ฅ^•ﻌ•^ฅ"
+            end
+        end
+    end
+end
+
+wait(2)
+updateBar()
