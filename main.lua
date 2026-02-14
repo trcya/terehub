@@ -15,68 +15,112 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = false, 
     ScrollBarEnabled = true,
 })
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Terehub | Violence District V9",
+    Icon = "rbxassetid://136360402262473",
+    Author = "David",
+    Folder = "Terehub",
+    Size = UDim2.fromOffset(600, 420),
+    Transparent = true,
+    Theme = "Indigo",
+})
 
 -- [[ TABS ]] --
-local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
+local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ MOVEMENT: SPEED, JUMP, INF JUMP ]] --
-MainTab:Slider({
-    Title = "Speedwalk",
-    Value = { Min = 16, Max = 500, Default = 16 },
-    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end
-})
-
-MainTab:Slider({
-    Title = "Jump High",
-    Value = { Min = 50, Max = 1000, Default = 50 },
-    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.JumpPower = v end
-})
-
-local infJump = false
+-- [[ MAIN: AUTO GENERATOR / COLLECTOR ]] --
+local autoGen = false
 MainTab:Toggle({
-    Title = "Infinity Jump",
-    Callback = function(state) infJump = state end
-})
-
--- [[ FLY: CAMERA & ANALOG SPEED ]] --
-local flyActive = false
-local flySpeed = 50
-MainTab:Toggle({
-    Title = "Camera Fly",
+    Title = "Auto Generator (Collect Items)",
     Callback = function(state)
-        flyActive = state
-        local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-        if state then
-            local bv = Instance.new("BodyVelocity", hrp)
-            bv.Name = "TereFlyV5"
-            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            task.spawn(function()
-                while flyActive do
-                    bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
-                    task.wait()
+        autoGen = state
+        task.spawn(function()
+            while autoGen do
+                -- Mencari item yang muncul di map Violence District
+                for _, v in pairs(game.Workspace:GetChildren()) do
+                    if v:IsA("Tool") or v:IsA("BackpackItem") or v.Name == "Scrap" or v.Name == "Item" then
+                        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
+                        if hrp and targetPart then
+                            hrp.CFrame = targetPart.CFrame
+                            task.wait(0.2)
+                        end
+                    end
                 end
-                bv:Destroy()
-            end)
-        end
+                task.wait(1)
+            end
+        end)
     end
 })
 
-MainTab:Slider({
-    Title = "Fly Speed",
-    Value = { Min = 10, Max = 500, Default = 50 },
-    Callback = function(v) flySpeed = v end
+-- [[ COMBAT: AUTO AIM KILLER ]] --
+local autoAim = false
+CombatTab:Toggle({
+    Title = "Auto Aim (Target Killer)",
+    Callback = function(state) autoAim = state end
 })
 
--- [[ VISUALS: ESP NAME & HIGHLIGHT ]] --
+-- Logic Silent Aim sederhana
+task.spawn(function()
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if autoAim then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                -- Hanya target yang timnya "Killer" atau "Murderer"
+                if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    if p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer")) then
+                        local cam = game.Workspace.CurrentCamera
+                        cam.CFrame = CFrame.new(cam.CFrame.Position, p.Character.Head.Position)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+-- [[ VISUALS: ESP TEAM COLOR ]] --
 local espActive = false
-VisualTab:Toggle({
-    Title = "ESP (Name + Highlight)",
-    Callback = function(state) espActive = state end
-})
+VisualTab:Toggle({ Title = "ESP Team (Red Killer/White Surv)", Callback = function(s) espActive = s end })
 
--- [[ PLAYERS: TELEPORT FIX ]] --
+game:GetService("RunService").RenderStepped:Connect(function()
+    if espActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character then
+                local color = Color3.fromRGB(255, 255, 255) -- Default Survivor (Putih)
+                
+                if p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer")) then
+                    color = Color3.fromRGB(255, 0, 0) -- Killer (Merah)
+                end
+
+                -- Highlight
+                local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
+                h.FillColor = color
+
+                -- ESP Title / Name Tag
+                local bb = p.Character:FindFirstChild("TereName")
+                if not bb then
+                    bb = Instance.new("BillboardGui", p.Character)
+                    bb.Name = "TereName"
+                    bb.AlwaysOnTop = true
+                    bb.Size = UDim2.new(0, 100, 0, 25)
+                    bb.ExtentsOffset = Vector3.new(0, 3, 0)
+                    local lbl = Instance.new("TextLabel", bb)
+                    lbl.Size = UDim2.new(1, 0, 1, 0)
+                    lbl.BackgroundTransparency = 1
+                    lbl.TextStrokeTransparency = 0
+                end
+                bb.TextLabel.Text = p.Name
+                bb.TextLabel.TextColor3 = color -- Nama jadi MERAH jika Killer
+            end
+        end
+    end
+end)
+
+-- [[ PLAYER LIST FIX ]] --
 local selectedPlayer = ""
 local function getPlayers()
     local tbl = {}
@@ -92,55 +136,19 @@ local PlayerDrop = PlayerTab:Dropdown({
     Callback = function(v) selectedPlayer = v end
 })
 
--- Tombol Refresh Paksa
-PlayerTab:Button({
-    Title = "Fix Player List",
-    Callback = function()
-        PlayerDrop:SetOptions(getPlayers())
-        Window:Notify({Title = "System", Content = "List Updated!"})
-    end
+PlayerTab:Button({ 
+    Title = "Fix Player List", 
+    Callback = function() PlayerDrop:SetOptions(getPlayers()) end 
 })
 
-PlayerTab:Button({
-    Title = "Teleport Now",
+PlayerTab:Button({ 
+    Title = "Teleport", 
     Callback = function()
         local target = game.Players:FindFirstChild(selectedPlayer)
-        if target and target.Character then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+        if target and target.Character then 
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame 
         end
-    end
+    end 
 })
 
--- [[ LOGIC RUNTIME ]] --
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJump then game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= game.Players.LocalPlayer and p.Character then
-                -- Highlight
-                if not p.Character:FindFirstChild("Highlight") then
-                    Instance.new("Highlight", p.Character)
-                end
-                -- Name Tag (Billboard)
-                if not p.Character:FindFirstChild("TereName") then
-                    local bb = Instance.new("BillboardGui", p.Character)
-                    bb.Name = "TereName"
-                    bb.AlwaysOnTop = true
-                    bb.Size = UDim2.new(0, 200, 0, 50)
-                    bb.ExtentsOffset = Vector3.new(0, 3, 0)
-                    local lbl = Instance.new("TextLabel", bb)
-                    lbl.Text = p.Name
-                    lbl.Size = UDim2.new(1, 0, 1, 0)
-                    lbl.BackgroundTransparency = 1
-                    lbl.TextColor3 = Color3.new(1, 1, 1)
-                    lbl.TextStrokeTransparency = 0
-                end
-            end
-        end
-    end
-end)
-
-Window:Notify({ Title = "Terehub Loaded", Content = "Tekan Fix Player List jika Dropdown Kosong", Duration = 5 })
+Window:Notify({ Title = "Violence District Pro", Content = "David, V9 siap digunakan!", Duration = 5 })
