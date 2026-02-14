@@ -1,25 +1,31 @@
--- TereHub - OrionLib (Delta Safe)
--- UI Only - Minimal & Stable
+-- TereHub - Rayfield UI
+-- Purple Blue Theme
+-- UI Only (Empty)
 
-local OrionLib = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/shlexware/Orion/main/source.lua"
+local Rayfield = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua"
 ))()
 
-local Window = OrionLib:MakeWindow({
+local Window = Rayfield:CreateWindow({
     Name = "TereHub",
-    HidePremium = false,
-    SaveConfig = false,
-    IntroEnabled = false
+    LoadingTitle = "TereHub",
+    LoadingSubtitle = "Rayfield UI",
+    ConfigurationSaving = {
+        Enabled = false
+    },
+    Discord = {
+        Enabled = false
+    },
+    KeySystem = false
 })
 
--- Empty Tab
-local Tab = Window:MakeTab({
-    Name = "Main",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
+-- Main Tab (Kosong)
+local MainTab = Window:CreateTab("Main", 4483362458)
 
-Tab:AddLabel("UI Loaded Successfully")
-Tab:AddLabel("OrionLib is working")
+MainTab:CreateLabel("UI Loaded Successfully")
+MainTab:CreateLabel("Rayfield is working")
 
-OrionLib:Init()
+-- Optional: Theme info
+local ThemeTab = Window:CreateTab("Theme", 4483362458)
+
+ThemeTab:CreateLabel("Default Rayfield theme active")
