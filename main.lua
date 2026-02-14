@@ -15,17 +15,6 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = false, 
     ScrollBarEnabled = true,
 })
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
-
-local Window = WindUI:CreateWindow({
-    Title = "Terehub | Violence District V9",
-    Icon = "rbxassetid://136360402262473",
-    Author = "David",
-    Folder = "Terehub",
-    Size = UDim2.fromOffset(600, 420),
-    Transparent = true,
-    Theme = "Indigo",
-})
 
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
