@@ -1,43 +1,31 @@
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-local Window = WindUI:CreateWindow({
-    Title = "Terehub",
-    Icon = "rbxassetid://136360402262473",
-    Author = "Beta Tester",
-    Folder = "Terehub",
-    Size = UDim2.fromOffset(600, 360),
-    MinSize = Vector2.new(560, 250),
-    MaxSize = Vector2.new(950, 760),
-    Transparent = true,
-    Theme = "Indigo",
-    Resizable = true,
-    SideBarWidth = 190,
-    BackgroundImageTransparency = 0.42,
-    HideSearchBar = false, 
-    ScrollBarEnabled = true,
-})
-
--- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
-local WorldTab = Window:Tab({ Title = "World", Icon = "globe" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ MOVEMENT: ANALOG CAMERA FLY ]] --
+-- [[ FIX: ANALOG FLY (Move Direction Based) ]] --
 local flyActive = false
 local flySpeed = 50
 MainTab:Toggle({
-    Title = "Camera Fly (Analog)",
+    Title = "True Analog Fly",
     Callback = function(state)
         flyActive = state
         local char = game.Players.LocalPlayer.Character
-        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char:WaitForChild("Humanoid")
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        
         if state then
-            local bv = Instance.new("BodyVelocity")
-            bv.Name = "TereFly"
-            bv.Parent = hrp
+            local bv = Instance.new("BodyVelocity", hrp)
+            bv.Name = "TereFlyForce"
             bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            
             task.spawn(function()
                 while flyActive do
-                    bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
+                    -- Menggunakan MoveDirection (Arah Analog/Keyboard) 
+                    -- Jika tidak gerak, tetap melayang di tempat
+                    if humanoid.MoveDirection.Magnitude > 0 then
+                        bv.Velocity = humanoid.MoveDirection * flySpeed
+                    else
+                        bv.Velocity = Vector3.new(0, 0, 0)
+                    end
                     task.wait()
                 end
                 bv:Destroy()
@@ -52,63 +40,35 @@ MainTab:Slider({
     Callback = function(v) flySpeed = v end
 })
 
-MainTab:Button({
-    Title = "Reset Speed & Jump",
-    Callback = function()
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-    end
-})
+-- [[ FIX: PLAYER LIST DROPDOWN ]] --
+local selectedPlayer = ""
+local pList = {}
 
--- [[ WORLD FEATURES ]] --
-local fullBright = false
-WorldTab:Toggle({
-    Title = "Full Bright (No Dark)",
-    Callback = function(state)
-        fullBright = state
-        if state then
-            game:GetService("Lighting").Brightness = 2
-            game:GetService("Lighting").ClockTime = 14
-            game:GetService("Lighting").GlobalShadows = false
-        else
-            game:GetService("Lighting").Brightness = 1
-            game:GetService("Lighting").GlobalShadows = true
+-- Fungsi untuk ambil data pemain terbaru
+local function getPlayers()
+    local tbl = {}
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then
+            table.insert(tbl, p.Name)
         end
     end
-})
+    return tbl
+end
 
-WorldTab:Button({
-    Title = "Anti-AFK (Stay Active)",
-    Callback = function()
-        local vu = game:GetService("VirtualUser")
-        game.Players.LocalPlayer.Idled:Connect(function()
-            vu:CaptureController()
-            vu:ClickButton2(Vector2.new())
-            Window:Notify({Title = "Anti-AFK", Content = "Karakter tetap aktif!"})
-        end)
-    end
-})
-
--- [[ PLAYERS: TELEPORT & ESP ]] --
-local selectedPlayer = ""
-local dropDown = PlayerTab:Dropdown({
+local PlayerDropdown = PlayerTab:Dropdown({
     Title = "Select Player",
-    Options = {}, -- Akan diisi otomatis
+    Options = getPlayers(), -- Langsung panggil fungsi
     Callback = function(v) selectedPlayer = v end
 })
 
--- Fungsi Refresh Nama Player
-local function updatePlayerList()
-    local pList = {}
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer then table.insert(pList, p.Name) end
-    end
-    dropDown:SetOptions(pList)
-end
-
+-- Tombol Refresh Manual jika ada yang baru masuk
 PlayerTab:Button({
     Title = "Refresh Player List",
-    Callback = function() updatePlayerList() end
+    Callback = function()
+        local newTable = getPlayers()
+        PlayerDropdown:SetOptions(newTable) -- Mengupdate isi dropdown WindUI
+        Window:Notify({Title = "System", Content = "Daftar pemain diperbarui!"})
+    end
 })
 
 PlayerTab:Button({
@@ -117,30 +77,8 @@ PlayerTab:Button({
         local target = game.Players:FindFirstChild(selectedPlayer)
         if target and target.Character then
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-        else
-            Window:Notify({Title = "Error", Content = "Pilih pemain & klik refresh!"})
         end
     end
 })
 
--- [[ ESP LOGIC ]] --
-local espActive = false
-PlayerTab:Toggle({
-    Title = "ESP Player",
-    Callback = function(state) espActive = state end
-})
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= game.Players.LocalPlayer and p.Character then
-                if not p.Character:FindFirstChild("Highlight") then
-                    Instance.new("Highlight", p.Character)
-                end
-            end
-        end
-    end
-end)
-
-updatePlayerList() -- Jalankan refresh pertama kali
-Window:Notify({ Title = "Terehub", Content = "V2 Loaded! Klik Refresh Player List.", Duration = 5 })
+Window:Notify({ Title = "Terehub", Content = "V3 Loaded! Analog Fly & Player Fix.", Duration = 5 })
