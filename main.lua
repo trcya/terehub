@@ -22,28 +22,39 @@ local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ MAIN: AUTO GENERATOR / COLLECTOR ]] --
-local autoGen = false
-MainTab:Toggle({
-    Title = "Auto Generator (Collect Items)",
+-- [[ FEATURE: AUTO PERFECT GENERATOR ]] --
+local autoSkillCheck = false
+AutoTab:Toggle({
+    Title = "Auto Perfect Skill Check",
     Callback = function(state)
-        autoGen = state
-        task.spawn(function()
-            while autoGen do
-                -- Mencari item yang muncul di map Violence District
-                for _, v in pairs(game.Workspace:GetChildren()) do
-                    if v:IsA("Tool") or v:IsA("BackpackItem") or v.Name == "Scrap" or v.Name == "Item" then
-                        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        local targetPart = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
-                        if hrp and targetPart then
-                            hrp.CFrame = targetPart.CFrame
-                            task.wait(0.2)
+        autoSkillCheck = state
+        if state then
+            task.spawn(function()
+                while autoSkillCheck do
+                    -- Mencari UI Generator/Skill Check di PlayerGui
+                    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                    -- Kita cari baris kode/UI yang menangani jarum (pointer) dan area putih
+                    -- Logika: Jika jarum berada di posisi area putih, tekan tombol 'Space' atau 'Click'
+                    for _, gui in pairs(playerGui:GetDescendants()) do
+                        if gui.Name == "SkillCheck" or gui.Name == "GeneratorUI" then -- Sesuaikan nama UI game
+                            local needle = gui:FindFirstChild("Pointer") -- Jarum
+                            local whiteArea = gui:FindFirstChild("SuccessZone") -- Area Putih
+                            
+                            if needle and whiteArea then
+                                -- Bandingkan posisi rotasi atau koordinat
+                                if math.abs(needle.Rotation - whiteArea.Rotation) < 5 then
+                                    -- Simulasi tekan tombol Space
+                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                                    task.wait(0.05)
+                                    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                                end
+                            end
                         end
                     end
+                    task.wait()
                 end
-                task.wait(1)
-            end
-        end)
+            end)
+        end
     end
 })
 
@@ -141,3 +152,4 @@ PlayerTab:Button({
 })
 
 Window:Notify({ Title = "Violence District Pro", Content = "David, V9 siap digunakan!", Duration = 5 })
+
