@@ -18,34 +18,43 @@ local Window = WindUI:CreateWindow({
 
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
-local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
-local ServerTab = Window:Tab({ Title = "Server", Icon = "server" })
 
--- [[ MOVEMENT: ANALOG FLY FIX ]] --
+-- [[ MOVEMENT: SPEED, JUMP, INF JUMP ]] --
+MainTab:Slider({
+    Title = "Speedwalk",
+    Value = { Min = 16, Max = 500, Default = 16 },
+    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end
+})
+
+MainTab:Slider({
+    Title = "Jump High",
+    Value = { Min = 50, Max = 1000, Default = 50 },
+    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.JumpPower = v end
+})
+
+local infJump = false
+MainTab:Toggle({
+    Title = "Infinity Jump",
+    Callback = function(state) infJump = state end
+})
+
+-- [[ FLY: CAMERA & ANALOG SPEED ]] --
 local flyActive = false
 local flySpeed = 50
 MainTab:Toggle({
-    Title = "True Analog Fly (Move Dir)",
+    Title = "Camera Fly",
     Callback = function(state)
         flyActive = state
-        local char = game.Players.LocalPlayer.Character
-        local hum = char:WaitForChild("Humanoid")
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        
+        local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
         if state then
             local bv = Instance.new("BodyVelocity", hrp)
-            bv.Name = "TereFly"
+            bv.Name = "TereFlyV5"
             bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
             task.spawn(function()
                 while flyActive do
-                    -- Bergerak berdasarkan input analog (MoveDirection)
-                    if hum.MoveDirection.Magnitude > 0 then
-                        bv.Velocity = hum.MoveDirection * flySpeed
-                    else
-                        bv.Velocity = Vector3.new(0, 0, 0)
-                    end
+                    bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
                     task.wait()
                 end
                 bv:Destroy()
@@ -55,32 +64,15 @@ MainTab:Toggle({
 })
 
 MainTab:Slider({
-    Title = "Speed",
-    Value = { Min = 16, Max = 300, Default = 16 },
-    Callback = function(v) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end
+    Title = "Fly Speed",
+    Value = { Min = 10, Max = 500, Default = 50 },
+    Callback = function(v) flySpeed = v end
 })
 
--- [[ COMBAT: AUTO CLICK ]] --
-local autoClick = false
-CombatTab:Toggle({
-    Title = "Auto Clicker",
-    Callback = function(state)
-        autoClick = state
-        task.spawn(function()
-            while autoClick do
-                local VirtualUser = game:GetService("VirtualUser")
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton1(Vector2.new(0,0))
-                task.wait(0.1)
-            end
-        end)
-    end
-})
-
--- [[ VISUALS: ESP TOTAL ]] --
+-- [[ VISUALS: ESP NAME & HIGHLIGHT ]] --
 local espActive = false
 VisualTab:Toggle({
-    Title = "Enable Player ESP",
+    Title = "ESP (Name + Highlight)",
     Callback = function(state) espActive = state end
 })
 
@@ -95,18 +87,22 @@ local function getPlayers()
 end
 
 local PlayerDrop = PlayerTab:Dropdown({
-    Title = "Select Target",
+    Title = "Select Player",
     Options = getPlayers(),
     Callback = function(v) selectedPlayer = v end
 })
 
+-- Tombol Refresh Paksa
 PlayerTab:Button({
-    Title = "Refresh & Fix List",
-    Callback = function() PlayerDrop:SetOptions(getPlayers()) end
+    Title = "Fix Player List",
+    Callback = function()
+        PlayerDrop:SetOptions(getPlayers())
+        Window:Notify({Title = "System", Content = "List Updated!"})
+    end
 })
 
 PlayerTab:Button({
-    Title = "Teleport",
+    Title = "Teleport Now",
     Callback = function()
         local target = game.Players:FindFirstChild(selectedPlayer)
         if target and target.Character then
@@ -115,30 +111,36 @@ PlayerTab:Button({
     end
 })
 
--- [[ SERVER: UTILITIES ]] --
-ServerTab:Button({
-    Title = "Rejoin Server",
-    Callback = function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
-    end
-})
+-- [[ LOGIC RUNTIME ]] --
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump then game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
+end)
 
-ServerTab:Button({
-    Title = "Copy JobId",
-    Callback = function() setclipboard(game.JobId) end
-})
-
--- [[ RUNTIME LOGIC ]] --
 game:GetService("RunService").RenderStepped:Connect(function()
     if espActive then
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character then
+                -- Highlight
                 if not p.Character:FindFirstChild("Highlight") then
                     Instance.new("Highlight", p.Character)
+                end
+                -- Name Tag (Billboard)
+                if not p.Character:FindFirstChild("TereName") then
+                    local bb = Instance.new("BillboardGui", p.Character)
+                    bb.Name = "TereName"
+                    bb.AlwaysOnTop = true
+                    bb.Size = UDim2.new(0, 200, 0, 50)
+                    bb.ExtentsOffset = Vector3.new(0, 3, 0)
+                    local lbl = Instance.new("TextLabel", bb)
+                    lbl.Text = p.Name
+                    lbl.Size = UDim2.new(1, 0, 1, 0)
+                    lbl.BackgroundTransparency = 1
+                    lbl.TextColor3 = Color3.new(1, 1, 1)
+                    lbl.TextStrokeTransparency = 0
                 end
             end
         end
     end
 end)
 
-Window:Notify({ Title = "Terehub V4", Content = "Welcome", Duration = 5 })
+Window:Notify({ Title = "Terehub Loaded", Content = "Tekan Fix Player List jika Dropdown Kosong", Duration = 5 })
