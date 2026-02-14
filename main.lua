@@ -1,8 +1,8 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 local Window = WindUI:CreateWindow({
-    Title = "Terehub",
+    Title = "Terehub -   Violence District",
     Icon = "rbxassetid://136360402262473",
-    Author = "violence district",
+    Author = "Violence District",
     Folder = "Terehub",
     Size = UDim2.fromOffset(600, 360),
     MinSize = Vector2.new(560, 250),
