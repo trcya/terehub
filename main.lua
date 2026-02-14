@@ -12,7 +12,7 @@ local Window = WindUI:CreateWindow({
     Resizable = true,
     SideBarWidth = 190,
     BackgroundImageTransparency = 0.42,
-    HideSearchBar = false, 
+    HideSearchBar = true, 
     ScrollBarEnabled = true,
     })
 
