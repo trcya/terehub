@@ -1,44 +1,43 @@
--- TereHub - WindUI Version
+-- TereHub - OrionLib Version
 -- Purple Blue Theme
--- UI Only (Empty)
+-- UI Only (No Features)
 
-local WindUI = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Footagesus/WindUI/main/source.lua"
+local OrionLib = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/shlexware/Orion/main/source"
 ))()
 
-local Window = WindUI:CreateWindow({
-    Title = "TereHub",
-    Icon = "shield",
-    Folder = "TereHub",
-    Size = UDim2.fromOffset(500, 400),
-    Theme = {
-        Accent = Color3.fromRGB(120, 60, 255), -- Ungu Biru
-        Background = Color3.fromRGB(25,20,45),
-        Outline = Color3.fromRGB(40,35,70),
-        Text = Color3.fromRGB(255,255,255)
-    }
+local Window = OrionLib:MakeWindow({
+    Name = "TereHub",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "TereHubConfig",
+    IntroEnabled = false
 })
 
--- Empty Main Tab
-local MainTab = Window:CreateTab({
+-- Main Tab (Kosong)
+local MainTab = Window:MakeTab({
     Name = "Main",
-    Icon = "sparkles"
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
 })
 
-MainTab:CreateLabel({
-    Name = "UI Loaded Successfully"
-})
+MainTab:AddParagraph("UI Ready", "OrionLib Purple-Blue Theme Loaded")
 
 -- Theme Tab
-local ThemeTab = Window:CreateTab({
+local ThemeTab = Window:MakeTab({
     Name = "Theme",
-    Icon = "palette"
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
 })
 
-ThemeTab:CreateColorPicker({
+ThemeTab:AddColorpicker({
     Name = "Accent Color",
-    Default = Color3.fromRGB(120,60,255),
+    Default = Color3.fromRGB(120, 60, 255),
     Callback = function(color)
-        WindUI:SetTheme("Accent", color)
+        OrionLib:SetTheme({
+            Main = color
+        })
     end
 })
+
+OrionLib:Init()
