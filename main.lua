@@ -19,47 +19,24 @@ local Window = WindUI:CreateWindow({
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Movement", Icon = "walking" })
 local WorldTab = Window:Tab({ Title = "Exploits", Icon = "zap" })
+local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ MOVEMENT FEATURES ]] --
-MainTab:Slider({
-    Title = "WalkSpeed",
-    Step = 1,
-    Value = { Min = 16, Max = 500, Default = 16 },
-    Callback = function(v)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
-    end
-})
-
-MainTab:Slider({
-    Title = "JumpPower",
-    Step = 1,
-    Value = { Min = 50, Max = 1000, Default = 50 },
-    Callback = function(v)
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = v
-    end
-})
-
-local infJump = false
-MainTab:Toggle({
-    Title = "Infinite Jump",
-    Callback = function(state) infJump = state end
-})
-
--- [[ FLY & NOCLIP ]] --
+-- [[ MOVEMENT: ANALOG FLY ]] --
 local flyActive = false
 local flySpeed = 50
-WorldTab:Toggle({
-    Title = "Fly (Camera Direction)",
+MainTab:Toggle({
+    Title = "Analog Fly",
     Callback = function(state)
         flyActive = state
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char:FindFirstChild("HumanoidRootPart")
         if state then
-            local char = game.Players.LocalPlayer.Character
-            local hrp = char:FindFirstChild("HumanoidRootPart")
             local bv = Instance.new("BodyVelocity", hrp)
             bv.Name = "TereFly"
             bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
             task.spawn(function()
                 while flyActive do
+                    -- Mengikuti arah analog/kamera
                     bv.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * flySpeed
                     task.wait()
                 end
@@ -69,25 +46,66 @@ WorldTab:Toggle({
     end
 })
 
-local noclipActive = false
+MainTab:Slider({
+    Title = "Fly Speed",
+    Value = { Min = 10, Max = 300, Default = 50 },
+    Callback = function(v) flySpeed = v end
+})
+
+-- [[ EXPLOITS: ESP PLAYER ]] --
+local espActive = false
 WorldTab:Toggle({
-    Title = "Noclip (Tembus Tembok)",
-    Callback = function(state) noclipActive = state end
+    Title = "ESP Player (Highlight)",
+    Callback = function(state)
+        espActive = state
+        if not state then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("Highlight") then
+                    p.Character.Highlight:Destroy()
+                end
+            end
+        end
+    end
+})
+
+-- [[ PLAYERS: TELEPORT ]] --
+local selectedPlayer = ""
+local playerList = {}
+
+for _, p in pairs(game.Players:GetPlayers()) do
+    if p ~= game.Players.LocalPlayer then table.insert(playerList, p.Name) end
+end
+
+PlayerTab:Dropdown({
+    Title = "Select Player",
+    Multi = false,
+    AllowNone = false,
+    Options = playerList,
+    Callback = function(v) selectedPlayer = v end
+})
+
+PlayerTab:Button({
+    Title = "Teleport to Player",
+    Callback = function()
+        local target = game.Players:FindFirstChild(selectedPlayer)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+        end
+    end
 })
 
 -- [[ RUNTIME LOGIC ]] --
-game:GetService("RunService").Stepped:Connect(function()
-    if noclipActive and game.Players.LocalPlayer.Character then
-        for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+game:GetService("RunService").RenderStepped:Connect(function()
+    if espActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character then
+                if not p.Character:FindFirstChild("Highlight") then
+                    local h = Instance.new("Highlight", p.Character)
+                    h.FillColor = Color3.fromRGB(0, 255, 136)
+                end
+            end
         end
     end
 end)
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-    if infJump then 
-        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") 
-    end
-end)
-
-Window:Notify({ Title = "Terehub", Content = "Script Loaded Successfully!", Duration = 5 })
+Window:Notify({ Title = "Terehub", Content = "Fitur Analog & Teleport Aktif!", Duration = 5 })
