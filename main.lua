@@ -1,36 +1,4 @@
---[[
-    Terehub - Complete Map Testing Script
-    Theme: Indigo
-    Fitur: Movement, Teleport Player, Fly with Character Direction
-]]
-
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-
--- Services
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local VirtualUser = game:GetService("VirtualUser")
-local player = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
-
--- Tunggu player siap
-repeat wait() until player and player.Character and player.Character:FindFirstChild("Humanoid")
-
--- Variables
-local noclipConnection = nil
-local infiniteJumpConnection = nil
-local flyConnection = nil
-local espConnections = {}
-local waypoints = {}
-local selectedPart = nil
-local flySpeed = 50
-local flyBodyVelocity = nil
-local isFlying = false
-local selectedTarget = nil
-
--- Buat Window
 local Window = WindUI:CreateWindow({
     Title = "Terehub",
     Icon = "rbxassetid://136360402262473",
@@ -44,7 +12,7 @@ local Window = WindUI:CreateWindow({
     Resizable = true,
     SideBarWidth = 190,
     BackgroundImageTransparency = 0.42,
-    HideSearchBar = false,
+    HideSearchBar = true,
     ScrollBarEnabled = true,
 })
 
