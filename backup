@@ -140,3 +140,9 @@ PlayerTab:Button({ Title = "Teleport", Callback = function()
 end })
 
 Window:Notify({ Title = "Terehub V10", Content = "Auto Perfect Skill Check Aktif!", Duration = 5 })
+
+
+
+git add main.lua
+git commit -m "update"
+git push origin main
