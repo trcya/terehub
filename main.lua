@@ -16,81 +16,114 @@ local Window = WindUI:CreateWindow({
     ScrollBarEnabled = true,
     })
 
-
-  -- [[ WAJIB: DEFINE SERVICES DI ATAS ]] --
+-- [[ SERVICES ]] --
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
--- [[ TABS ]] --
-local AutoTab = Window:Tab({ Title = "Automation", Icon = "cpu" })
-local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
-
--- [[ FEATURE: FULL AUTO GENERATOR ]] --
+-- [[ VARIABLES ]] --
+local autoAim = false
 local autoGen = false
-local autoSkillCheck = false
+local walkSpeedValue = 16
+local noclipActive = false
 
--- 1. Toggle Skill Check (Area Putih)
-AutoTab:Toggle({
-    Title = "Auto Perfect Skill Check",
-    Callback = function(state) autoSkillCheck = state end
+-- [[ TABS SETUP ]] --
+local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
+local AutoTab = Window:Tab({ Title = "Automation", Icon = "cpu" })
+
+-- [[ MAIN TAB: MOVEMENT ]] --
+MainTab:Slider({
+    Title = "Speedwalk",
+    Min = 16,
+    Max = 250,
+    Default = 16,
+    Callback = function(v) walkSpeedValue = v end
 })
 
--- 2. Toggle Teleport & Repair (Yang tadi kamu belum ada)
+MainTab:Toggle({
+    Title = "Noclip (Nembus Tembok)",
+    Description = "Membuat karakter bisa menembus objek",
+    Callback = function(state) noclipActive = state end
+})
+
+-- [[ COMBAT TAB ]] --
+CombatTab:Toggle({
+    Title = "Auto Aim (Killer)",
+    Callback = function(state) autoAim = state end
+})
+
+-- [[ AUTO TAB ]] --
 AutoTab:Toggle({
-    Title = "Full Auto Repair Generator",
+    Title = "Full Auto Gen (Hybrid)",
     Callback = function(state) autoGen = state end
 })
 
--- [[ LOGIC: AUTO SKILL CHECK ]] --
-task.spawn(function()
-    while true do
-        if autoSkillCheck then
-            local pGui = player:FindFirstChild("PlayerGui")
-            if pGui then
-                -- Mencari UI Skill Check secara dinamis
-                for _, v in pairs(pGui:GetDescendants()) do
-                    if v.Name == "Pointer" or v.Name == "Needle" then 
-                        local success = v.Parent:FindFirstChild("SuccessZone") or v.Parent:FindFirstChild("WhiteArea")
-                        if success and math.abs(v.Rotation - success.Rotation) < 7 then
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                            task.wait(0.01)
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                            task.wait(0.2)
-                        end
+-- [[ LOGIC: MOVEMENT & NOCLIP ]] --
+-- Menggunakan Stepped agar Noclip stabil dan tidak mental
+RunService.Stepped:Connect(function()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        -- Update Speed
+        player.Character.Humanoid.WalkSpeed = walkSpeedValue
+        
+        -- Update Noclip
+        if noclipActive then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- [[ LOGIC: AUTO AIM ]] --
+RunService.RenderStepped:Connect(function()
+    if autoAim and player.Character then
+        local closestKiller = nil
+        local shortestDistance = math.huge
+
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                local teamName = p.Team and p.Team.Name:lower() or ""
+                if teamName:find("killer") or teamName:find("murderer") then
+                    local distance = (player.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                    if distance < shortestDistance then
+                        shortestDistance = distance
+                        closestKiller = p.Character.Head
                     end
                 end
             end
         end
-        task.wait() -- Minimal wait agar tidak crash
+
+        if closestKiller then
+            local cam = Workspace.CurrentCamera
+            cam.CFrame = CFrame.lookAt(cam.CFrame.Position, closestKiller.Position)
+        end
     end
 end)
 
--- [[ LOGIC: TELEPORT & INTERACT GENERATOR ]] --
+-- [[ LOGIC: AUTO GENERATOR ]] --
 task.spawn(function()
     while true do
         if autoGen and player.Character then
-            -- Cari Generator
-            for _, obj in pairs(workspace:GetDescendants()) do
+            for _, obj in pairs(Workspace:GetDescendants()) do
                 if obj.Name:lower():find("generator") then
                     local hrp = player.Character:FindFirstChild("HumanoidRootPart")
                     local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     
                     if hrp and target then
-                        -- TELEPORT
                         hrp.CFrame = target.CFrame * CFrame.new(0, 3, 0)
                         
-                        -- INTERAKSI (Ini yang bikin support PC & Mobile)
                         local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
                         if prompt then
-                            fireproximityprompt(prompt) -- Utama untuk Mobile & PC
+                            fireproximityprompt(prompt)
                         else
-                            -- Backup jika game pakai sistem tombol custom
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                             task.wait(0.1)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
                         end
                         break
                     end
@@ -101,21 +134,4 @@ task.spawn(function()
     end
 end)
 
--- [[ VISUALS: ESP KILLER RED ]] --
-local espActive = false
-VisualTab:Toggle({ Title = "ESP Killer & Survivor", Callback = function(s) espActive = s end })
-
-RunService.RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= player and p.Character then
-                local color = (p.Team and (p.Team.Name:find("Killer") or p.Team.Name:find("Murderer"))) and Color3.fromRGB(255,0,0) or Color3.fromRGB(255,255,255)
-                local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
-                h.FillColor = color
-                h.OutlineColor = Color3.new(1,1,1)
-            end
-        end
-    end
-end)
-
-Window:Notify({ Title = "Terehub V10", Content = "Auto Generator & Skill Check Ready!", Duration = 5 })
+Window:Notify({ Title = "Terehub V10", Content = "Movement & Noclip Ready!", Duration = 5 })
