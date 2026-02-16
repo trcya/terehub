@@ -71,27 +71,33 @@ end)
 -- [[ LOGIC: TELEPORT & INTERACT GENERATOR ]] --
 task.spawn(function()
     while true do
-        if autoGen and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            -- Mencari Generator terdekat di Workspace
-            for _, obj in pairs(Workspace:GetDescendants()) do
+        if autoGen and player.Character then
+            -- Cari Generator
+            for _, obj in pairs(workspace:GetDescendants()) do
                 if obj.Name:lower():find("generator") then
-                    local targetPart = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+                    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                    local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     
-                    if targetPart then
-                        -- Teleport ke Generator
-                        player.Character.HumanoidRootPart.CFrame = targetPart.CFrame * CFrame.new(0, 3, 0)
+                    if hrp and target then
+                        -- TELEPORT
+                        hrp.CFrame = target.CFrame * CFrame.new(0, 3, 0)
                         
-                        -- Otomatis tekan 'E' atau ProximityPrompt
-                        local prompt = obj:FindFirstChildOfClass("ProximityPrompt") or obj:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        -- INTERAKSI (Ini yang bikin support PC & Mobile)
+                        local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
                         if prompt then
-                            fireproximityprompt(prompt)
+                            fireproximityprompt(prompt) -- Utama untuk Mobile & PC
+                        else
+                            -- Backup jika game pakai sistem tombol custom
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.1)
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
                         end
-                        break -- Berhenti di satu generator saja sampai selesai
+                        break
                     end
                 end
             end
         end
-        task.wait(1) -- Scan generator setiap 1 detik
+        task.wait(0.5)
     end
 end)
 
