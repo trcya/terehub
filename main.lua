@@ -162,59 +162,48 @@ AutoTab:Toggle({
     Callback = function(state) autoGen = state end
 })
 
--- [[ LOGIC: ESP (Sistem Scan Tim yang Lebih Luas) ]] --
-RunService.RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                -- Cek apakah Killer: via Team, atau via Folder khusus di Workspace jika ada
-                local isKiller = false
-                if p.Team then
-                    local tName = p.Team.Name:lower()
-                    if tName:find("killer") or tName:find("murderer") or tName:find("beast") then
-                        isKiller = true
-                    end
+--- [[ 1. VISUALS TAB ]] ---
+VisualTab:Toggle({
+    Title = "ESP Player & Killer",
+    Description = "Melihat posisi pemain menembus tembok",
+    Callback = function(state) 
+        espActive = state 
+        if not state then
+            -- Bersihkan highlight jika dimatikan
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("TereESP") then
+                    p.Character.TereESP:Destroy()
                 end
-                
-                local color = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
-                
-                local highlight = p.Character:FindFirstChild("TereESP") or Instance.new("Highlight")
-                highlight.Name = "TereESP"
-                highlight.Parent = p.Character
-                highlight.FillColor = color
-                highlight.OutlineColor = Color3.new(1,1,1)
-                highlight.FillTransparency = 0.5
             end
         end
     end
-end)
+})
 
--- [[ LOGIC: AUTO GEN (Mobile Interaction Fix) ]] --
+-- [[ LOGIC: AUTO GEN  ]] --
 task.spawn(function()
     while true do
-        if autoGen and player.Character then
+        if autoGen and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = player.Character.HumanoidRootPart
+            
             for _, obj in pairs(Workspace:GetDescendants()) do
                 if obj.Name:lower():find("generator") then
-                    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-                    -- Cari bagian mesinnya
-                    local target = obj:IsA("BasePart") and obj or obj:FindFirstChild("Main") or obj:FindFirstChildWhichIsA("BasePart")
+                    local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     
-                    if hrp and target then
-                        -- Teleport sedikit lebih dekat (2.5 studs)
-                        hrp.CFrame = target.CFrame * CFrame.new(2.5, 0, 0)
+                    if target then
+                        -- SOLUSI: Menggunakan posisi World agar tidak terpengaruh rotasi generator
+                        -- Kita ambil posisi generator, lalu geser 3 stud ke samping (X) secara global
+                        hrp.CFrame = CFrame.new(target.Position + Vector3.new(3, 0, 0))
+                        
+                        -- Membuat karakter menoleh ke arah generator
                         hrp.CFrame = CFrame.lookAt(hrp.Position, target.Position)
                         
-                        -- Simulasi klik interaksi untuk mobile
+                        -- Jalankan Interaksi
                         local prompt = obj:FindFirstChildOfClass("ProximityPrompt") or obj:FindFirstChildWhichIsA("ProximityPrompt", true)
-                        
                         if prompt then
-                            -- Paksa aktifkan interaksi
-                            task.spawn(function()
-                                fireproximityprompt(prompt)
-                            end)
+                            fireproximityprompt(prompt)
                         end
                         
-                        -- Backup: Tekan tombol interaksi virtual secara berulang
+                        -- Backup input E untuk Desktop/Mobile
                         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
                         task.wait(0.1)
                         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -224,10 +213,9 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(0.3) -- Lebih cepat scan-nya
+        task.wait(0.4)
     end
 end)
-
 -- [[ LOGIC: SKILL CHECK (Sesuai Video) ]] --
 task.spawn(function()
     while true do
