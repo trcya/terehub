@@ -24,6 +24,7 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
 -- [[ VARIABLES ]] --
+local espActive = false
 local autoAim = false
 local autoGen = false
 local walkSpeedValue = 16
@@ -31,6 +32,7 @@ local noclipActive = false
 
 -- [[ TABS SETUP ]] --
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local AutoTab = Window:Tab({ Title = "Automation", Icon = "cpu" })
 
@@ -47,6 +49,23 @@ MainTab:Toggle({
     Title = "Noclip (Nembus Tembok)",
     Description = "Membuat karakter bisa menembus objek",
     Callback = function(state) noclipActive = state end
+})
+
+-- [[ VISUAL TAB: ESP ]] --
+VisualTab:Toggle({
+    Title = "ESP Players & Killer",
+    Description = "Merah = Killer, Putih = Survivor",
+    Callback = function(state) 
+        espActive = state 
+        -- Jika dimatikan, hapus semua highlight
+        if not state then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("TereESP") then
+                    p.Character.TereESP:Destroy()
+                end
+            end
+        end
+    end
 })
 
 -- [[ COMBAT TAB ]] --
@@ -115,8 +134,14 @@ task.spawn(function()
                     local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
                     
                     if hrp and target then
-                        hrp.CFrame = target.CFrame * CFrame.new(0, 3, 0)
+                        -- KODE LAMA: CFrame.new(0, 3, 0) -> Ini ke atas
+                        -- KODE BARU: CFrame.new(3, 0, 0) -> Ini ke samping (jarak 3 stud)
+                        hrp.CFrame = target.CFrame * CFrame.new(3, 0, 0)
                         
+                        -- Membuat karakter otomatis menghadap ke arah generator
+                        hrp.CFrame = CFrame.lookAt(hrp.Position, target.Position)
+                        
+                        -- Interaksi
                         local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
                         if prompt then
                             fireproximityprompt(prompt)
