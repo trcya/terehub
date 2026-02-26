@@ -1,112 +1,142 @@
--- [[ SERVICES ]] --
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local player = Players.LocalPlayer
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
 
--- [[ VARIABLES ]] --
-local espActive = false
-local autoAim = false
-local autoGen = false
-local walkSpeedValue = 16
-local noclipActive = false
-
--- [[ TABS SETUP ]] --
-local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
-local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
-local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
-local AutoTab = Window:Tab({ Title = "Automation", Icon = "cpu" })
-
--- [[ VISUAL TAB: ESP ]] --
-VisualTab:Toggle({
-    Title = "ESP Players & Killer",
-    Description = "Merah = Killer, Putih = Survivor",
-    Callback = function(state) 
-        espActive = state 
-        -- Jika dimatikan, hapus semua highlight
-        if not state then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("TereESP") then
-                    p.Character.TereESP:Destroy()
-                end
-            end
-        end
-    end
+local Window = WindUI:CreateWindow({
+    Title = "Terehub | Violence District V10",
+    Icon = "rbxassetid://136360402262473",
+    Author = "David",
+    Folder = "Terehub",
+    Size = UDim2.fromOffset(600, 420),
+    Transparent = true,
+    Theme = "Indigo",
 })
 
--- [[ MAIN TAB: MOVEMENT ]] --
-MainTab:Slider({ Title = "Speed", Min = 16, Max = 250, Default = 16, Callback = function(v) walkSpeedValue = v end })
-MainTab:Toggle({ Title = "Noclip", Callback = function(state) noclipActive = state end })
+-- [[ TABS ]] --
+local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
+local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
+local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ COMBAT & AUTO ]] --
-CombatTab:Toggle({ Title = "Auto Aim (Killer)", Callback = function(state) autoAim = state end })
-AutoTab:Toggle({ Title = "Full Auto Gen", Callback = function(state) autoGen = state end })
+-- [[ MAIN: AUTO PERFECT SKILL CHECK & COLLECTOR ]] --
+local autoSkillCheck = false
+MainTab:Toggle({
+    Title = "Auto Perfect Skill Check",
+    Callback = function(state) autoSkillCheck = state end
+})
 
--- [[ LOGIC: ESP PLAYER & KILLER ]] --
-RunService.RenderStepped:Connect(function()
-    if espActive then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                -- Logika Warna: Cek Team
-                local isKiller = false
-                if p.Team and (p.Team.Name:lower():find("killer") or p.Team.Name:find("murderer")) then
-                    isKiller = true
-                end
-                
-                local color = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
-                
-                -- Gunakan Highlight agar nembus tembok
-                local highlight = p.Character:FindFirstChild("TereESP")
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Name = "TereESP"
-                    highlight.Parent = p.Character
-                end
-                
-                highlight.FillColor = color
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineTransparency = 0
-            end
-        end
-    end
-end)
-
--- [[ LOGIC: MOVEMENT ]] --
-RunService.Stepped:Connect(function()
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = walkSpeedValue
-        if noclipActive then
-            for _, v in pairs(player.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end
-    end
-end)
-
--- [[ LOGIC: AUTO GENERATOR (SAMPING) ]] --
+-- Logic Auto Skill Check (Tepat di Putih)
 task.spawn(function()
     while true do
-        if autoGen and player.Character then
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj.Name:lower():find("generator") then
-                    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-                    local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
-                    if hrp and target then
-                        -- Teleport ke samping (X = 3)
-                        hrp.CFrame = target.CFrame * CFrame.new(3, 0, 0)
-                        hrp.CFrame = CFrame.lookAt(hrp.Position, target.Position)
-                        
-                        local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
-                        if prompt then fireproximityprompt(prompt) end
-                        break
+        if autoSkillCheck then
+            local pGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+            -- Mencari UI Skill Check di Violence District
+            for _, v in pairs(pGui:GetDescendants()) do
+                if v.Name == "SkillCheck" or v.Name == "Pointer" then 
+                    local needle = v -- Jarum
+                    local successZone = v.Parent:FindFirstChild("SuccessZone") or v.Parent:FindFirstChild("WhiteArea")
+                    
+                    if needle and successZone then
+                        -- Jika posisi jarum masuk ke area sukses, otomatis tekan
+                        if math.abs(needle.Rotation - successZone.Rotation) < 5 then
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                            task.wait(0.01)
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                        end
                     end
                 end
             end
         end
-        task.wait(0.5)
+        task.wait()
     end
 end)
 
-Window:Notify({ Title = "Terehub", Content = "ESP & All Features Loaded!", Duration = 5 })
+local autoGen = false
+MainTab:Toggle({
+    Title = "Auto Collect Items",
+    Callback = function(state)
+        autoGen = state
+        task.spawn(function()
+            while autoGen do
+                for _, v in pairs(game.Workspace:GetChildren()) do
+                    if v:IsA("Tool") or v.Name == "Scrap" or v.Name == "Item" then
+                        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        local target = v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
+                        if hrp and target then
+                            hrp.CFrame = target.CFrame
+                            task.wait(0.2)
+                        end
+                    end
+                end
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+-- [[ COMBAT: AUTO AIM KILLER ]] --
+local autoAim = false
+CombatTab:Toggle({
+    Title = "Auto Aim (Target Killer)",
+    Callback = function(state) autoAim = state end
+})
+
+task.spawn(function()
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if autoAim then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    if p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer")) then
+                        workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, p.Character.Head.Position)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+-- [[ VISUALS: ESP TEAM COLOR ]] --
+local espActive = false
+VisualTab:Toggle({ Title = "ESP Team (Red Killer/White Surv)", Callback = function(s) espActive = s end })
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if espActive then
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= game.Players.LocalPlayer and p.Character then
+                local color = (p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer"))) and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
+                
+                local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
+                h.FillColor = color
+
+                local bb = p.Character:FindFirstChild("TereName") or Instance.new("BillboardGui", p.Character)
+                if not p.Character:FindFirstChild("TereName") then
+                    bb.Name = "TereName"; bb.AlwaysOnTop = true; bb.Size = UDim2.new(0, 100, 0, 25); bb.ExtentsOffset = Vector3.new(0, 3, 0)
+                    local lbl = Instance.new("TextLabel", bb); lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1; lbl.TextStrokeTransparency = 0
+                end
+                bb.TextLabel.Text = p.Name; bb.TextLabel.TextColor3 = color
+            end
+        end
+    end
+end)
+
+-- [[ PLAYER LIST FIX ]] --
+local selectedPlayer = ""
+local function getPlayers()
+    local tbl = {}
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then table.insert(tbl, p.Name) end
+    end
+    return tbl
+end
+
+local PlayerDrop = PlayerTab:Dropdown({
+    Title = "Select Player",
+    Options = getPlayers(),
+    Callback = function(v) selectedPlayer = v end
+})
+
+PlayerTab:Button({ Title = "Fix Player List", Callback = function() PlayerDrop:SetOptions(getPlayers()) end })
+PlayerTab:Button({ Title = "Teleport", Callback = function()
+    local target = game.Players:FindFirstChild(selectedPlayer)
+    if target and target.Character then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame end
+end })
+
+Window:Notify({ Title = "Terehub V10", Content = "Auto Perfect Skill Check Aktif!", Duration = 5 })
