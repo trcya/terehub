@@ -12,6 +12,7 @@ local Window = WindUI:CreateWindow({
 
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+local CharTab = Window:Tab({ Title = "Character", Icon = "user" })
 local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
@@ -72,6 +73,72 @@ MainTab:Toggle({
     end
 })
 
+local autoRepairGen = false
+MainTab:Toggle({
+    Title = "Auto Repair Generator",
+    Callback = function(state)
+        autoRepairGen = state
+        task.spawn(function()
+            while autoRepairGen do
+                pcall(function()
+                    for _, prompt in pairs(workspace:GetDescendants()) do
+                        if prompt:IsA("ProximityPrompt") then
+                            local name = string.lower(prompt.Parent.Name)
+                            local action = string.lower(prompt.ActionText)
+                            
+                            if string.find(name, "gen") or string.find(action, "repair") or string.find(action, "fix") then
+                                local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                local targetPart = prompt.Parent
+                                if targetPart and targetPart:IsA("BasePart") and hrp then
+                                    -- Teleport near the generator
+                                    hrp.CFrame = targetPart.CFrame * CFrame.new(0, 0, 3)
+                                    task.wait(0.2)
+                                    -- Otomatis trigger repair
+                                    fireproximityprompt(prompt)
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(1)
+            end
+        end)
+    end
+})
+
+-- [[ CHARACTER: MOVEMENT MODIFIERS ]] --
+local wsToggle = false
+local wsValue = 16
+local jpToggle = false
+local jpValue = 50
+local infJump = false
+
+CharTab:Toggle({ Title = "Enable WalkSpeed", Callback = function(s) wsToggle = s end })
+CharTab:Slider({ Title = "WalkSpeed", Step = 1, Min = 16, Max = 150, Default = 16, Callback = function(v) wsValue = v end })
+
+CharTab:Toggle({ Title = "Enable JumpPower", Callback = function(s) jpToggle = s end })
+CharTab:Slider({ Title = "JumpPower", Step = 1, Min = 50, Max = 200, Default = 50, Callback = function(v) jpValue = v end })
+
+CharTab:Toggle({ Title = "Infinite Jump", Callback = function(s) infJump = s end })
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+task.spawn(function()
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if wsToggle and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = wsValue
+        end
+        if jpToggle and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = jpValue
+        end
+    end)
+end)
+
 -- [[ COMBAT: AUTO AIM KILLER ]] --
 local autoAim = false
 CombatTab:Toggle({
@@ -93,6 +160,26 @@ task.spawn(function()
     end)
 end)
 
+-- Hitbox Expander
+local hitboxActive = false
+local hitboxSize = 5
+CombatTab:Toggle({ Title = "Hitbox Expander", Callback = function(state) hitboxActive = state end })
+CombatTab:Slider({ Title = "Hitbox Size", Step = 1, Min = 2, Max = 25, Default = 5, Callback = function(v) hitboxSize = v end })
+
+task.spawn(function()
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if hitboxActive then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                    p.Character.HumanoidRootPart.Transparency = 0.5
+                    p.Character.HumanoidRootPart.CanCollide = false
+                end
+            end
+        end
+    end)
+end)
+
 -- [[ VISUALS: ESP TEAM COLOR ]] --
 local espActive = false
 VisualTab:Toggle({ Title = "ESP Team (Red Killer/White Surv)", Callback = function(s) espActive = s end })
@@ -101,7 +188,16 @@ game:GetService("RunService").RenderStepped:Connect(function()
     if espActive then
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= game.Players.LocalPlayer and p.Character then
-                local color = (p.Team and (string.find(p.Team.Name, "Killer") or string.find(p.Team.Name, "Murderer"))) and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
+                -- Logika untuk menentukan Killer vs Survivor
+                local isKiller = false
+                if p.Team and (string.match(string.lower(p.Team.Name), "killer") or string.match(string.lower(p.Team.Name), "murderer")) then
+                    isKiller = true
+                elseif p.Character:FindFirstChildWhichIsA("Tool") and string.match(string.lower(p.Character:FindFirstChildWhichIsA("Tool").Name), "knife") then
+                    -- Fallback: Kadang Killer tidak masuk tim, tapi memegang senjata tertentu
+                    isKiller = true
+                end
+
+                local color = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 255, 255)
                 
                 local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
                 h.FillColor = color
@@ -115,6 +211,23 @@ game:GetService("RunService").RenderStepped:Connect(function()
             end
         end
     end
+end)
+
+-- Fullbright
+local fullbright = false
+VisualTab:Toggle({ Title = "Fullbright", Callback = function(state) fullbright = state end })
+
+task.spawn(function()
+    local lighting = game:GetService("Lighting")
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if fullbright then
+            lighting.Ambient = Color3.new(1, 1, 1)
+            lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
+            lighting.ColorShift_Top = Color3.new(1, 1, 1)
+            lighting.Brightness = 2
+            lighting.GlobalShadows = false
+        end
+    end)
 end)
 
 -- [[ PLAYER LIST FIX ]] --
@@ -139,4 +252,17 @@ PlayerTab:Button({ Title = "Teleport", Callback = function()
     if target and target.Character then game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame end
 end })
 
-Window:Notify({ Title = "Terehub V10", Content = "Auto Perfect Skill Check Aktif!", Duration = 5 })
+PlayerTab:Button({ Title = "Spectate", Callback = function()
+    local target = game.Players:FindFirstChild(selectedPlayer)
+    if target and target.Character then
+        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
+    end
+end })
+
+PlayerTab:Button({ Title = "Unspectate", Callback = function()
+    if game.Players.LocalPlayer.Character then
+        workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+    end
+end })
+
+Window:Notify({ Title = "Terehub V10", Content = "Terehub + New Features Loaded!", Duration = 5 })
