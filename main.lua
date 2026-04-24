@@ -180,10 +180,10 @@ local flying = false
 local flySpeed = 50
 
 CharTab:Toggle({ Title = "Enable WalkSpeed", Callback = function(s) wsToggle = s end })
-CharTab:Slider({ Title = "WalkSpeed", Step = 1, Min = 16, Max = 150, Value = 16, Default = 16, Callback = function(v) wsValue = v end })
+CharTab:Slider({ Title = "WalkSpeed", Step = 1, Min = 16, Max = 150, Default = 16, Callback = function(v) wsValue = v end })
 
 CharTab:Toggle({ Title = "Enable JumpPower", Callback = function(s) jpToggle = s end })
-CharTab:Slider({ Title = "JumpPower", Step = 1, Min = 50, Max = 200, Value = 50, Default = 50, Callback = function(v) jpValue = v end })
+CharTab:Slider({ Title = "JumpPower", Step = 1, Min = 50, Max = 200, Default = 50, Callback = function(v) jpValue = v end })
 
 CharTab:Toggle({ Title = "Infinite Jump", Callback = function(s) infJump = s end })
 CharTab:Toggle({ Title = "Noclip (Tembus)", Callback = function(s) noclip = s end })
@@ -217,7 +217,7 @@ CharTab:Toggle({ Title = "Fly (Terbang)", Callback = function(s)
         if hum then hum.PlatformStand = false end
     end
 end })
-CharTab:Slider({ Title = "Fly Speed", Step = 1, Min = 10, Max = 300, Value = 50, Default = 50, Callback = function(v) flySpeed = v end })
+CharTab:Slider({ Title = "Fly Speed", Step = 1, Min = 10, Max = 300, Default = 50, Callback = function(v) flySpeed = v end })
 
 UserInputService.JumpRequest:Connect(function()
     if infJump then
@@ -435,45 +435,48 @@ end })
 Window:Notify({ Title = "Terehub V10", Content = "Script Loaded Successfully!", Duration = 5 })
 
 -- [[ UI TOGGLE SYSTEM ]] --
-local toggleKey = Enum.KeyCode.RightControl
-local toggleGui = game:GetService("CoreGui"):FindFirstChild("TereToggle")
-if toggleGui then toggleGui:Destroy() end
+pcall(function()
+    local toggleKey = Enum.KeyCode.RightControl
+    local toggleGuiName = "TereToggle"
+    local oldGui = game:GetService("CoreGui"):FindFirstChild(toggleGuiName)
+    if oldGui then oldGui:Destroy() end
 
-toggleGui = Instance.new("ScreenGui")
-toggleGui.Name = "TereToggle"
-toggleGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
-toggleGui.ResetOnSpawn = false
+    local toggleGui = Instance.new("ScreenGui")
+    toggleGui.Name = toggleGuiName
+    toggleGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+    toggleGui.ResetOnSpawn = false
 
-local toggleBtn = Instance.new("ImageButton")
-toggleBtn.Name = "OpenButton"
-toggleBtn.Parent = toggleGui
-toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-toggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
-toggleBtn.Size = UDim2.new(0, 45, 0, 45)
-toggleBtn.Image = "rbxassetid://136360402262473"
-toggleBtn.BorderSizePixel = 0
-toggleBtn.Draggable = true -- Make it movable
+    local toggleBtn = Instance.new("ImageButton")
+    toggleBtn.Name = "OpenButton"
+    toggleBtn.Parent = toggleGui
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    toggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
+    toggleBtn.Size = UDim2.new(0, 45, 0, 45)
+    toggleBtn.Image = "rbxassetid://136360402262473"
+    toggleBtn.BorderSizePixel = 0
+    toggleBtn.Draggable = true
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = toggleBtn
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = toggleBtn
 
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(80, 80, 255)
-stroke.Thickness = 2
-stroke.Parent = toggleBtn
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(80, 80, 255)
+    stroke.Thickness = 2
+    stroke.Parent = toggleBtn
 
-toggleBtn.MouseButton1Click:Connect(function()
-    if WindUI and WindUI.ScreenGui then
-        WindUI.ScreenGui.Enabled = not WindUI.ScreenGui.Enabled
-    end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if not gpe and input.KeyCode == toggleKey then
+    toggleBtn.MouseButton1Click:Connect(function()
         if WindUI and WindUI.ScreenGui then
             WindUI.ScreenGui.Enabled = not WindUI.ScreenGui.Enabled
         end
-    end
+    end)
+
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == toggleKey then
+            if WindUI and WindUI.ScreenGui then
+                WindUI.ScreenGui.Enabled = not WindUI.ScreenGui.Enabled
+            end
+        end
+    end)
 end)
 
