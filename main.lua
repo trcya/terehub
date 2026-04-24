@@ -436,7 +436,7 @@ Window:Notify({ Title = "Terehub V10", Content = "Script Loaded Successfully!", 
 
 -- [[ UI TOGGLE SYSTEM ]] --
 pcall(function()
-    local toggleKey = Enum.KeyCode.RightControl
+    local toggleKey = Enum.KeyCode.Minus
     local toggleGuiName = "TereToggle"
     local oldGui = game:GetService("CoreGui"):FindFirstChild(toggleGuiName)
     if oldGui then oldGui:Destroy() end
@@ -449,33 +449,35 @@ pcall(function()
     local toggleBtn = Instance.new("ImageButton")
     toggleBtn.Name = "OpenButton"
     toggleBtn.Parent = toggleGui
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    toggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
-    toggleBtn.Size = UDim2.new(0, 45, 0, 45)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    toggleBtn.Position = UDim2.new(0, 15, 0.5, -20)
+    toggleBtn.Size = UDim2.new(0, 40, 0, 40)
     toggleBtn.Image = "rbxassetid://136360402262473"
     toggleBtn.BorderSizePixel = 0
     toggleBtn.Draggable = true
+    toggleBtn.Active = true
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = toggleBtn
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(80, 80, 255)
+    stroke.Color = Color3.fromRGB(100, 100, 255)
     stroke.Thickness = 2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = toggleBtn
 
-    toggleBtn.MouseButton1Click:Connect(function()
+    local function toggleUI()
         if WindUI and WindUI.ScreenGui then
             WindUI.ScreenGui.Enabled = not WindUI.ScreenGui.Enabled
         end
-    end)
+    end
+
+    toggleBtn.MouseButton1Click:Connect(toggleUI)
 
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and input.KeyCode == toggleKey then
-            if WindUI and WindUI.ScreenGui then
-                WindUI.ScreenGui.Enabled = not WindUI.ScreenGui.Enabled
-            end
+            toggleUI()
         end
     end)
 end)
