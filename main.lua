@@ -10,20 +10,32 @@ print("Terehub: Initializing...")
 
 -- [[ UI LOADING ]] --
 local function LoadUI()
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua"))()
-    end)
-    if success and result then
+    local source = "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"
+    local success, content = pcall(game.HttpGet, game, source)
+    
+    if not success then
+        warn("Terehub: Failed to fetch UI source. Check your internet connection.")
+        return nil
+    end
+    
+    local library, err = loadstring(content)
+    if not library then
+        warn("Terehub: Failed to compile UI library. Error: " .. tostring(err))
+        return nil
+    end
+    
+    local ok, result = pcall(library)
+    if ok then
         return result
     else
-        warn("Terehub: Failed to load WindUI. Error: " .. tostring(result))
+        warn("Terehub: Failed to initialize UI library. Error: " .. tostring(result))
         return nil
     end
 end
 
 local WindUI = LoadUI()
 if not WindUI then 
-    print("Terehub: CRITICAL - UI Library failed to load!")
+    warn("Terehub: CRITICAL - UI Library not found, script stopped.")
     return 
 end
 print("Terehub: UI Library loaded, creating window...")
