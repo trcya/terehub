@@ -6,6 +6,8 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 
+print("Terehub: Initializing...")
+
 -- [[ UI LOADING ]] --
 local function LoadUI()
     local success, result = pcall(function()
@@ -21,9 +23,10 @@ end
 
 local WindUI = LoadUI()
 if not WindUI then 
-    print("Terehub: UI Library not found, script stopped.")
+    print("Terehub: CRITICAL - UI Library failed to load!")
     return 
 end
+print("Terehub: UI Library loaded, creating window...")
 
 local Window = WindUI:CreateWindow({
     Title = "Terehub | Violence District V10",
@@ -31,7 +34,7 @@ local Window = WindUI:CreateWindow({
     Author = "David",
     Folder = "Terehub",
     Size = UDim2.fromOffset(600, 420),
-    Transparent = true,
+    Transparent = false, -- Changed to false for better visibility
     Theme = "Indigo",
 })
 
