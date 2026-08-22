@@ -66,7 +66,129 @@ local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
 local CharTab = Window:Tab({ Title = "Character", Icon = "user" })
 local CombatTab = Window:Tab({ Title = "Combat", Icon = "crosshair" })
 local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
+local ShopTab = Window:Tab({ Title = "Shops", Icon = "shopping-cart" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
+
+-- [[ SHOPS: REMOTE MAPSHOPS OPENER ]] --
+ShopTab:Section({ Title = "Remote MapShops" })
+
+ShopTab:Button({
+    Title = "Open MapShops GUI (Remote)",
+    Desc = "Membuka tampilan GUI MapShops dari jarak jauh",
+    Callback = function()
+        pcall(function()
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            if pGui then
+                local opened = false
+                for _, gui in pairs(pGui:GetChildren()) do
+                    local n = string.lower(gui.Name)
+                    if string.find(n, "mapshop") or string.find(n, "shop") or string.find(n, "store") or string.find(n, "merchant") or string.find(n, "vendor") then
+                        gui.Enabled = true
+                        for _, desc in pairs(gui:GetDescendants()) do
+                            if desc:IsA("Frame") or desc:IsA("GuiObject") then
+                                desc.Visible = true
+                            end
+                        end
+                        opened = true
+                    end
+                end
+                if opened then
+                    Window:Notify({ Title = "MapShops", Content = "GUI MapShops berhasil dibuka!", Duration = 3 })
+                else
+                    Window:Notify({ Title = "MapShops", Content = "GUI tidak ditemukan di PlayerGui. Mencoba memicu Remote Prompt...", Duration = 3 })
+                end
+            end
+        end)
+    end
+})
+
+ShopTab:Button({
+    Title = "Remote Interact MapShops (Bypass Jarak)",
+    Desc = "Interaksi ProximityPrompt MapShops dari jarak jauh tanpa teleport",
+    Callback = function()
+        pcall(function()
+            local count = 0
+            for _, prompt in pairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    local pName = string.lower(prompt.Parent.Name)
+                    local actText = string.lower(prompt.ActionText)
+                    local objText = string.lower(prompt.ObjectText)
+                    
+                    if string.find(pName, "mapshop") or string.find(pName, "shop") or string.find(pName, "merchant") or string.find(pName, "vendor") or string.find(actText, "shop") or string.find(actText, "buy") or string.find(objText, "shop") then
+                        prompt.MaxActivationDistance = 999999
+                        prompt.RequiresLineOfSight = false
+                        
+                        if fireproximityprompt then
+                            fireproximityprompt(prompt)
+                        else
+                            prompt:InputHoldBegin()
+                            task.wait(prompt.HoldDuration + 0.05)
+                            prompt:InputHoldEnd()
+                        end
+                        count = count + 1
+                    end
+                end
+            end
+            Window:Notify({ Title = "MapShops", Content = "Memicu " .. tostring(count) .. " Shop Prompt dari jauh!", Duration = 3 })
+        end)
+    end
+})
+
+local infShopDistance = false
+ShopTab:Toggle({
+    Title = "Infinite Distance MapShops Prompts",
+    Desc = "Membuat semua Prompt Toko/MapShops bisa diakses dari mana saja",
+    Callback = function(state)
+        infShopDistance = state
+    end
+})
+
+task.spawn(function()
+    while true do
+        if infShopDistance then
+            pcall(function()
+                for _, prompt in pairs(workspace:GetDescendants()) do
+                    if prompt:IsA("ProximityPrompt") then
+                        local pName = string.lower(prompt.Parent.Name)
+                        local actText = string.lower(prompt.ActionText)
+                        local objText = string.lower(prompt.ObjectText)
+                        
+                        if string.find(pName, "mapshop") or string.find(pName, "shop") or string.find(pName, "merchant") or string.find(actText, "shop") or string.find(objText, "shop") then
+                            prompt.MaxActivationDistance = 999999
+                            prompt.RequiresLineOfSight = false
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(2)
+    end
+end)
+
+ShopTab:Button({
+    Title = "Teleport ke MapShops Terdekat",
+    Desc = "Teleportasi karakter langsung ke lokasi MapShops",
+    Callback = function()
+        pcall(function()
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            
+            for _, v in pairs(workspace:GetDescendants()) do
+                local n = string.lower(v.Name)
+                if string.find(n, "mapshop") or string.find(n, "shop") then
+                    local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+                    if part then
+                        hrp.CFrame = part.CFrame * CFrame.new(0, 0, 3)
+                        Window:Notify({ Title = "Teleport", Content = "Berhasil teleport ke " .. v.Name, Duration = 3 })
+                        break
+                    end
+                end
+            end
+        end)
+    end
+})
+
 
 -- [[ MAIN: AUTO PERFECT SKILL CHECK & COLLECTOR ]] --
 local autoSkillCheck = false
