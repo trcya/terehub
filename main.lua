@@ -389,13 +389,13 @@ local function CreateTab(tabName, iconText)
     return Elements
 end
 
--- Create Pages (WindUI Tab Icons)
-local MainTab = CreateTab("Main", "🏠")
-local CharTab = CreateTab("Character", "👤")
-local CombatTab = CreateTab("Combat", "⚔️")
-local VisualTab = CreateTab("Visuals", "👁️")
-local ShopTab = CreateTab("Shops", "🛒")
-local PlayerTab = CreateTab("Players", "👥")
+-- Create Pages (WindUI Clean Icons)
+local MainTab = CreateTab("Main", "✦")
+local CharTab = CreateTab("Character", "◈")
+local CombatTab = CreateTab("Combat", "⚔")
+local VisualTab = CreateTab("Visuals", "⦿")
+local ShopTab = CreateTab("Shops", "❖")
+local PlayerTab = CreateTab("Players", "⎔")
 
 -- Set Default Active Tab
 TabButtons["Shops"].BackgroundColor3 = Color3.fromRGB(99, 102, 241)
