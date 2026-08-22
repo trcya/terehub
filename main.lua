@@ -8,116 +8,121 @@ local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 
-print("Terehub Modern UI: Initializing...")
+print("Terehub WindUI Clone: Initializing...")
 
 -- [[ CLEANUP OLD UI ]] --
 if CoreGui:FindFirstChild("TerehubCustomUI") then
     CoreGui.TerehubCustomUI:Destroy()
 end
 
--- [[ CREATE MODERN SCREEN GUI ]] --
+-- [[ CREATE WINDUI STYLE SCREEN GUI ]] --
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "TerehubCustomUI"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Main Window Frame (Modern Glassmorphism Style)
+-- Main Window Frame (WindUI Exact Style: 600x420, Dark Slate Rounded)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 640, 0, 430)
-MainFrame.Position = UDim2.new(0.5, -320, 0.5, -215)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 23)
+MainFrame.Size = UDim2.new(0, 600, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 19, 26)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainFrame
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(99, 102, 241) -- Modern Indigo Accent
+MainStroke.Color = Color3.fromRGB(45, 48, 64)
 MainStroke.Thickness = 1.5
-MainStroke.Transparency = 0.2
 MainStroke.Parent = MainFrame
 
--- Top Bar (Header)
+-- TopBar Header (WindUI Layout)
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 44)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 23, 31)
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = Color3.fromRGB(14, 15, 21)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
+-- Icon Avatar / Logo
+local TitleIcon = Instance.new("ImageLabel")
+TitleIcon.Size = UDim2.new(0, 24, 0, 24)
+TitleIcon.Position = UDim2.new(0, 14, 0, 10)
+TitleIcon.BackgroundTransparency = 1
+TitleIcon.Image = "rbxassetid://136360402262473"
+TitleIcon.Parent = TopBar
+
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-TitleLabel.Position = UDim2.new(0, 16, 0, 0)
+TitleLabel.Position = UDim2.new(0, 46, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "TEREHUB <font color='#6366F1'>v10</font>"
+TitleLabel.Text = "Terehub <font color='#818CF8'>| Violence District V10</font>"
 TitleLabel.RichText = true
 TitleLabel.TextColor3 = Color3.fromRGB(240, 242, 248)
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 14
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = TopBar
 
--- Control Buttons Container
-local BtnContainer = Instance.new("Frame")
-BtnContainer.Size = UDim2.new(0, 70, 0, 30)
-BtnContainer.Position = UDim2.new(1, -80, 0, 7)
-BtnContainer.BackgroundTransparency = 1
-BtnContainer.Parent = TopBar
+-- WindUI Window Control Buttons (Minimize -, Close X)
+local ControlContainer = Instance.new("Frame")
+ControlContainer.Size = UDim2.new(0, 70, 0, 30)
+ControlContainer.Position = UDim2.new(1, -78, 0, 7)
+ControlContainer.BackgroundTransparency = 1
+ControlContainer.Parent = TopBar
 
-local BtnLayout = Instance.new("UIListLayout")
-BtnLayout.FillDirection = Enum.FillDirection.Horizontal
-BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-BtnLayout.Padding = UDim.new(0, 8)
-BtnLayout.Parent = BtnContainer
+local ControlLayout = Instance.new("UIListLayout")
+ControlLayout.FillDirection = Enum.FillDirection.Horizontal
+ControlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+ControlLayout.Padding = UDim.new(0, 6)
+ControlLayout.Parent = ControlContainer
 
 -- Minimize Button (-)
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
-MinimizeBtn.Text = "—"
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(28, 30, 42)
+MinimizeBtn.Text = "-"
 MinimizeBtn.TextColor3 = Color3.fromRGB(200, 205, 220)
 MinimizeBtn.Font = Enum.Font.GothamBold
-MinimizeBtn.TextSize = 12
-MinimizeBtn.Parent = BtnContainer
+MinimizeBtn.TextSize = 16
+MinimizeBtn.Parent = ControlContainer
 
 local MinCorner = Instance.new("UICorner")
-MinCorner.CornerRadius = UDim.new(0, 8)
+MinCorner.CornerRadius = UDim.new(0, 6)
 MinCorner.Parent = MinimizeBtn
 
 -- Close Button (X)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
-CloseBtn.Text = "✕"
+CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 12
-CloseBtn.Parent = BtnContainer
+CloseBtn.TextSize = 13
+CloseBtn.Parent = ControlContainer
 
 local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
 -- Window Toggle Logic
 local isMinimized = false
 MinimizeBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
-    local targetSize = isMinimized and UDim2.new(0, 640, 0, 44) or UDim2.new(0, 640, 0, 430)
+    local targetSize = isMinimized and UDim2.new(0, 600, 0, 45) or UDim2.new(0, 600, 0, 420)
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = targetSize}):Play()
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Size = UDim2.new(0, 640, 0, 0)}):Play()
-    task.wait(0.2)
     MainFrame.Visible = false
 end)
 
--- Make Window Smooth Draggable
+-- Make Window Draggable
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -140,35 +145,35 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Sidebar Navigation
+-- Sidebar (WindUI Style Navigation Left Panel)
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 150, 1, -44)
-Sidebar.Position = UDim2.new(0, 0, 0, 44)
-Sidebar.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
+Sidebar.Size = UDim2.new(0, 160, 1, -45)
+Sidebar.Position = UDim2.new(0, 0, 0, 45)
+Sidebar.BackgroundColor3 = Color3.fromRGB(14, 15, 21)
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainFrame
 
 local SidebarPad = Instance.new("UIPadding")
-SidebarPad.PaddingTop = UDim.new(0, 12)
+SidebarPad.PaddingTop = UDim.new(0, 10)
 SidebarPad.PaddingLeft = UDim.new(0, 10)
 SidebarPad.PaddingRight = UDim.new(0, 10)
 SidebarPad.Parent = Sidebar
 
 local TabListLayout = Instance.new("UIListLayout")
 TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Padding = UDim.new(0, 6)
+TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.Parent = Sidebar
 
--- Content Frame
+-- Content Container Frame
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
-ContentContainer.Size = UDim2.new(1, -150, 1, -44)
-ContentContainer.Position = UDim2.new(0, 150, 0, 44)
+ContentContainer.Size = UDim2.new(1, -160, 1, -45)
+ContentContainer.Position = UDim2.new(0, 160, 0, 45)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Parent = MainFrame
 
--- [[ TAB BUILDER SYSTEM ]] --
+-- [[ WINDUI SYSTEM BUILDER ]] --
 local Tabs = {}
 local TabButtons = {}
 
@@ -177,30 +182,30 @@ local function CreateTab(tabName, iconText)
     TabPage.Name = tabName .. "Page"
     TabPage.Size = UDim2.new(1, 0, 1, 0)
     TabPage.BackgroundTransparency = 1
-    TabPage.ScrollBarThickness = 3
-    TabPage.ScrollBarImageColor3 = Color3.fromRGB(99, 102, 241)
+    TabPage.ScrollBarThickness = 4
+    TabPage.ScrollBarImageColor3 = Color3.fromRGB(129, 140, 248)
     TabPage.Visible = false
     TabPage.Parent = ContentContainer
 
     local PageList = Instance.new("UIListLayout")
     PageList.SortOrder = Enum.SortOrder.LayoutOrder
-    PageList.Padding = UDim.new(0, 10)
+    PageList.Padding = UDim.new(0, 8)
     PageList.Parent = TabPage
 
     local PagePad = Instance.new("UIPadding")
-    PagePad.PaddingTop = UDim.new(0, 12)
-    PagePad.PaddingLeft = UDim.new(0, 14)
-    PagePad.PaddingRight = UDim.new(0, 14)
-    PagePad.PaddingBottom = UDim.new(0, 12)
+    PagePad.PaddingTop = UDim.new(0, 10)
+    PagePad.PaddingLeft = UDim.new(0, 12)
+    PagePad.PaddingRight = UDim.new(0, 12)
+    PagePad.PaddingBottom = UDim.new(0, 10)
     PagePad.Parent = TabPage
 
-    -- Sidebar Tab Button
+    -- WindUI Tab Pill Button
     local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(1, 0, 0, 38)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(18, 21, 30)
-    TabBtn.Text = (iconText or "✦") .. "  " .. tabName
-    TabBtn.TextColor3 = Color3.fromRGB(150, 155, 175)
-    TabBtn.Font = Enum.Font.GothamSemibold
+    TabBtn.Size = UDim2.new(1, 0, 0, 36)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(22, 24, 34)
+    TabBtn.Text = (iconText or "•") .. "   " .. tabName
+    TabBtn.TextColor3 = Color3.fromRGB(160, 165, 185)
+    TabBtn.Font = Enum.Font.GothamMedium
     TabBtn.TextSize = 13
     TabBtn.TextXAlignment = Enum.TextXAlignment.Left
     TabBtn.Parent = Sidebar
@@ -218,8 +223,8 @@ local function CreateTab(tabName, iconText)
         for name, btn in pairs(TabButtons) do
             local active = (name == tabName)
             TweenService:Create(btn, TweenInfo.new(0.2), {
-                BackgroundColor3 = active and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(18, 21, 30),
-                TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 155, 175)
+                BackgroundColor3 = active and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(22, 24, 34),
+                TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 165, 185)
             }):Play()
         end
     end)
@@ -227,13 +232,25 @@ local function CreateTab(tabName, iconText)
     Tabs[tabName] = TabPage
     TabButtons[tabName] = TabBtn
 
-    -- Modern Element Components
+    -- Elements Component (WindUI Design Exact Matches)
     local Elements = {}
+
+    function Elements:AddSection(title)
+        local SecLabel = Instance.new("TextLabel")
+        SecLabel.Size = UDim2.new(1, 0, 0, 20)
+        SecLabel.BackgroundTransparency = 1
+        SecLabel.Text = string.upper(title)
+        SecLabel.TextColor3 = Color3.fromRGB(129, 140, 248)
+        SecLabel.Font = Enum.Font.GothamBold
+        SecLabel.TextSize = 11
+        SecLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SecLabel.Parent = TabPage
+    end
 
     function Elements:AddButton(text, callback)
         local Btn = Instance.new("TextButton")
         Btn.Size = UDim2.new(1, 0, 0, 40)
-        Btn.BackgroundColor3 = Color3.fromRGB(24, 28, 40)
+        Btn.BackgroundColor3 = Color3.fromRGB(25, 27, 38)
         Btn.Text = text
         Btn.TextColor3 = Color3.fromRGB(240, 242, 248)
         Btn.Font = Enum.Font.GothamMedium
@@ -245,14 +262,14 @@ local function CreateTab(tabName, iconText)
         Corner.Parent = Btn
 
         local Stroke = Instance.new("UIStroke")
-        Stroke.Color = Color3.fromRGB(45, 52, 75)
+        Stroke.Color = Color3.fromRGB(45, 48, 68)
         Stroke.Thickness = 1
         Stroke.Parent = Btn
 
         Btn.MouseButton1Click:Connect(function()
             TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(99, 102, 241)}):Play()
             task.wait(0.1)
-            TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 28, 40)}):Play()
+            TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(25, 27, 38)}):Play()
             pcall(callback)
         end)
     end
@@ -261,8 +278,8 @@ local function CreateTab(tabName, iconText)
         local state = default or false
 
         local Frame = Instance.new("Frame")
-        Frame.Size = UDim2.new(1, 0, 0, 42)
-        Frame.BackgroundColor3 = Color3.fromRGB(24, 28, 40)
+        Frame.Size = UDim2.new(1, 0, 0, 44)
+        Frame.BackgroundColor3 = Color3.fromRGB(25, 27, 38)
         Frame.Parent = TabPage
 
         local Corner = Instance.new("UICorner")
@@ -270,7 +287,7 @@ local function CreateTab(tabName, iconText)
         Corner.Parent = Frame
 
         local Stroke = Instance.new("UIStroke")
-        Stroke.Color = Color3.fromRGB(45, 52, 75)
+        Stroke.Color = Color3.fromRGB(45, 48, 68)
         Stroke.Thickness = 1
         Stroke.Parent = Frame
 
@@ -285,26 +302,40 @@ local function CreateTab(tabName, iconText)
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = Frame
 
-        local ToggleBox = Instance.new("TextButton")
-        ToggleBox.Size = UDim2.new(0, 46, 0, 24)
-        ToggleBox.Position = UDim2.new(1, -58, 0.5, -12)
-        ToggleBox.BackgroundColor3 = state and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(40, 46, 62)
-        ToggleBox.Text = state and "ON" or "OFF"
-        ToggleBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ToggleBox.Font = Enum.Font.GothamBold
-        ToggleBox.TextSize = 11
-        ToggleBox.Parent = Frame
+        -- WindUI Modern Switch Slider
+        local SwitchBg = Instance.new("Frame")
+        SwitchBg.Size = UDim2.new(0, 44, 0, 22)
+        SwitchBg.Position = UDim2.new(1, -56, 0.5, -11)
+        SwitchBg.BackgroundColor3 = state and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(40, 44, 60)
+        SwitchBg.Parent = Frame
 
-        local ToggleCorner = Instance.new("UICorner")
-        ToggleCorner.CornerRadius = UDim.new(0, 12)
-        ToggleCorner.Parent = ToggleBox
+        local SwitchCorner = Instance.new("UICorner")
+        SwitchCorner.CornerRadius = UDim.new(0, 11)
+        SwitchCorner.Parent = SwitchBg
 
-        ToggleBox.MouseButton1Click:Connect(function()
+        local SwitchDot = Instance.new("Frame")
+        SwitchDot.Size = UDim2.new(0, 16, 0, 16)
+        SwitchDot.Position = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        SwitchDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SwitchDot.Parent = SwitchBg
+
+        local DotCorner = Instance.new("UICorner")
+        DotCorner.CornerRadius = UDim.new(0, 8)
+        DotCorner.Parent = SwitchDot
+
+        local ClickBtn = Instance.new("TextButton")
+        ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+        ClickBtn.BackgroundTransparency = 1
+        ClickBtn.Text = ""
+        ClickBtn.Parent = Frame
+
+        ClickBtn.MouseButton1Click:Connect(function()
             state = not state
-            TweenService:Create(ToggleBox, TweenInfo.new(0.2), {
-                BackgroundColor3 = state and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(40, 46, 62)
-            }):Play()
-            ToggleBox.Text = state and "ON" or "OFF"
+            local targetBg = state and Color3.fromRGB(99, 102, 241) or Color3.fromRGB(40, 44, 60)
+            local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            
+            TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = targetBg}):Play()
+            TweenService:Create(SwitchDot, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
             pcall(callback, state)
         end)
     end
@@ -312,7 +343,7 @@ local function CreateTab(tabName, iconText)
     function Elements:AddParagraph(title, content)
         local Frame = Instance.new("Frame")
         Frame.Size = UDim2.new(1, 0, 0, 60)
-        Frame.BackgroundColor3 = Color3.fromRGB(20, 24, 34)
+        Frame.BackgroundColor3 = Color3.fromRGB(22, 24, 34)
         Frame.Parent = TabPage
 
         local Corner = Instance.new("UICorner")
@@ -341,7 +372,7 @@ local function CreateTab(tabName, iconText)
         ContentL.Position = UDim2.new(0, 12, 0, 28)
         ContentL.BackgroundTransparency = 1
         ContentL.Text = content
-        ContentL.TextColor3 = Color3.fromRGB(210, 215, 230)
+        ContentL.TextColor3 = Color3.fromRGB(200, 205, 220)
         ContentL.Font = Enum.Font.Gotham
         ContentL.TextSize = 12
         ContentL.TextXAlignment = Enum.TextXAlignment.Left
@@ -358,7 +389,7 @@ local function CreateTab(tabName, iconText)
     return Elements
 end
 
--- Create Pages with Icons
+-- Create Pages (WindUI Tab Icons)
 local MainTab = CreateTab("Main", "🏠")
 local CharTab = CreateTab("Character", "👤")
 local CombatTab = CreateTab("Combat", "⚔️")
@@ -371,20 +402,24 @@ TabButtons["Shops"].BackgroundColor3 = Color3.fromRGB(99, 102, 241)
 TabButtons["Shops"].TextColor3 = Color3.fromRGB(255, 255, 255)
 Tabs["Shops"].Visible = true
 
--- [[ FLOATING TOGGLE BUTTON (MOBILE & PC) ]] --
+-- [[ FLOATING OPEN BUTTON (WINDUI EXACT EDITOPENBUTTON CLONE) ]] --
 local FloatBtn = Instance.new("TextButton")
 FloatBtn.Name = "TerehubFloatingBtn"
 FloatBtn.Size = UDim2.new(0, 48, 0, 48)
-FloatBtn.Position = UDim2.new(0, 16, 0.5, -24)
-FloatBtn.BackgroundColor3 = Color3.fromRGB(15, 17, 23)
-FloatBtn.Text = "HUB"
-FloatBtn.TextColor3 = Color3.fromRGB(99, 102, 241)
-FloatBtn.Font = Enum.Font.GothamBold
-FloatBtn.TextSize = 13
+FloatBtn.Position = UDim2.new(0, 15, 0.5, -24)
+FloatBtn.BackgroundColor3 = Color3.fromRGB(18, 19, 26)
+FloatBtn.Text = ""
 FloatBtn.Parent = ScreenGui
 
+local FloatIcon = Instance.new("ImageLabel")
+FloatIcon.Size = UDim2.new(0, 26, 0, 26)
+FloatIcon.Position = UDim2.new(0.5, -13, 0.5, -13)
+FloatIcon.BackgroundTransparency = 1
+FloatIcon.Image = "rbxassetid://136360402262473"
+FloatIcon.Parent = FloatBtn
+
 local FloatCorner = Instance.new("UICorner")
-FloatCorner.CornerRadius = UDim.new(0, 24)
+FloatCorner.CornerRadius = UDim.new(0, 12)
 FloatCorner.Parent = FloatBtn
 
 local FloatStroke = Instance.new("UIStroke")
@@ -394,12 +429,11 @@ FloatStroke.Parent = FloatBtn
 
 FloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
-    if MainFrame.Visible then
-        MainFrame.Size = UDim2.new(0, 640, 0, 430)
-    end
 end)
 
 -- [[ SHOPS TAB FEATURES ]] --
+ShopTab:AddSection("Developer Tools")
+
 ShopTab:AddButton("Scan All Remotes (Lihat di Console F9)", function()
     print("=== [TEREHUB REMOTE SCANNER] ===")
     local count = 0
@@ -414,6 +448,8 @@ ShopTab:AddButton("Scan All Remotes (Lihat di Console F9)", function()
     end
     print("================================")
 end)
+
+ShopTab:AddSection("Auto Buy & Restock")
 
 ShopTab:AddButton("Buy All Items (Direct Remote Buy)", function()
     pcall(function()
@@ -435,6 +471,8 @@ local autoBuyAllShops = false
 ShopTab:AddToggle("Auto Buy All (Loop)", false, function(state)
     autoBuyAllShops = state
 end)
+
+ShopTab:AddSection("Live Restock Timer Status")
 
 local RestockParagraph = ShopTab:AddParagraph("Restock Countdown", "Memantau waktu restock...")
 
@@ -545,4 +583,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("Terehub Modern UI: Successfully Loaded!")
+print("Terehub WindUI Clone: Successfully Loaded!")
