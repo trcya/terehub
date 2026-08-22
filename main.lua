@@ -70,16 +70,51 @@ local ShopTab = Window:Tab({ Title = "Shops", Icon = "shopping-cart" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
 -- [[ SHOPS: REMOTE MAPSHOPS OPENER & BUY ALL ]] --
-ShopTab:Section({ Title = "Developer Tools & SimpleSpy" })
+ShopTab:Section({ Title = "Developer Tools & Remote Scanner (Alternatif SimpleSpy)" })
 
 ShopTab:Button({
-    Title = "Launch SimpleSpy v3",
-    Desc = "Menjalankan SimpleSpy v3 untuk me-remote spy RemoteEvent/Function pembelian & restock",
+    Title = "Scan All Shop Remotes (Lihat di Console F9)",
+    Desc = "Mencari semua RemoteEvent/Function bertema Shop/Buy/Dice di game dan menampilkannya di F9 Console",
     Callback = function()
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/ex-serum/SimpleSpy-v3/main/src/source.lua"))()
-            Window:Notify({ Title = "SimpleSpy", Content = "SimpleSpy v3 Berhasil Dimuat!", Duration = 3 })
-        end)
+        print("=== [TEREHUB REMOTE SCANNER] ===")
+        local count = 0
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                local name = string.lower(obj.Name)
+                if string.find(name, "buy") or string.find(name, "shop") or string.find(name, "purchase") or string.find(name, "dice") or string.find(name, "potion") or string.find(name, "restock") or string.find(name, "roll") then
+                    count = count + 1
+                    print(string.format("[%d] %s (%s) -> Path: %s", count, obj.Name, obj.ClassName, obj:GetFullName()))
+                end
+            end
+        end
+        print("================================")
+        Window:Notify({ Title = "Remote Scanner", Content = "Berhasil menemukan " .. tostring(count) .. " Remote! Buka F9 Console untuk melihatnya.", Duration = 4 })
+    end
+})
+
+local hookActive = false
+ShopTab:Toggle({
+    Title = "Log Remote Event (F9 Console)",
+    Desc = "Mencetak setiap RemoteEvent yang dipanggil oleh game saat Anda membeli barang ke F9 Console",
+    Callback = function(state)
+        hookActive = state
+        if state then
+            Window:Notify({ Title = "Remote Logger", Content = "Logger Aktif! Beli item di game lalu buka Console F9.", Duration = 4 })
+            task.spawn(function()
+                if hookmetamethod then
+                    local oldNamecall
+                    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                        local method = getnamecallmethod()
+                        if hookActive and (method == "FireServer" or method == "InvokeServer") then
+                            print(string.format("[REMOTE CALLED] %s:%s() | Args: ", self:GetFullName(), method), ...)
+                        end
+                        return oldNamecall(self, ...)
+                    end)
+                else
+                    print("[REMOTE LOGGER ERROR] Executor Anda tidak mendukung hookmetamethod!")
+                end
+            end)
+        end
     end
 })
 
