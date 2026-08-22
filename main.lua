@@ -48,13 +48,18 @@ local Window = WindUI:CreateWindow({
     Size = UDim2.fromOffset(600, 420),
     Transparent = false, -- Changed to false for better visibility
     Theme = "Indigo",
-    OpenButton = {
+})
+
+-- [[ FLOATING OPEN BUTTON (MUTLAK MUNCUL DI PC & MOBILE) ]] --
+pcall(function()
+    Window:EditOpenButton({
         Title = "Terehub",
         Icon = "rbxassetid://136360402262473",
         Enabled = true,
         Draggable = true,
-    },
-})
+        OnlyMobile = false, -- PENTING: Harus false agar tetap muncul di PC/Laptop
+    })
+end)
 
 -- [[ TABS ]] --
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
