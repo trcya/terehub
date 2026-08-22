@@ -8,11 +8,14 @@ local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 
-print("Terehub WindUI Clone: Initializing...")
+print("Terehub Ultimate: Initializing Custom Explorer & Remote Spy...")
 
 -- [[ CLEANUP OLD UI ]] --
 if CoreGui:FindFirstChild("TerehubCustomUI") then
     CoreGui.TerehubCustomUI:Destroy()
+end
+if CoreGui:FindFirstChild("TereExplorerWindow") then
+    CoreGui.TereExplorerWindow:Destroy()
 end
 
 -- [[ CREATE WINDUI STYLE SCREEN GUI ]] --
@@ -49,7 +52,6 @@ TopBar.BackgroundColor3 = Color3.fromRGB(14, 15, 21)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
--- Icon Avatar / Logo
 local TitleIcon = Instance.new("ImageLabel")
 TitleIcon.Size = UDim2.new(0, 24, 0, 24)
 TitleIcon.Position = UDim2.new(0, 14, 0, 10)
@@ -58,7 +60,7 @@ TitleIcon.Image = "rbxassetid://136360402262473"
 TitleIcon.Parent = TopBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(0.6, 0, 1, 0)
+TitleLabel.Size = UDim2.new(0, 300, 1, 0)
 TitleLabel.Position = UDim2.new(0, 46, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "Terehub <font color='#818CF8'>| Violence District V10</font>"
@@ -82,7 +84,6 @@ ControlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 ControlLayout.Padding = UDim.new(0, 6)
 ControlLayout.Parent = ControlContainer
 
--- Minimize Button (-)
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(28, 30, 42)
@@ -96,7 +97,6 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 6)
 MinCorner.Parent = MinimizeBtn
 
--- Close Button (X)
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
@@ -110,7 +110,6 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
--- Window Toggle Logic
 local isMinimized = false
 MinimizeBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -145,7 +144,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Sidebar (WindUI Style Navigation Left Panel)
+-- Sidebar & Content Container
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, 160, 1, -45)
@@ -165,7 +164,6 @@ TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.Parent = Sidebar
 
--- Content Container Frame
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
 ContentContainer.Size = UDim2.new(1, -160, 1, -45)
@@ -199,7 +197,6 @@ local function CreateTab(tabName, iconText)
     PagePad.PaddingBottom = UDim.new(0, 10)
     PagePad.Parent = TabPage
 
-    -- WindUI Tab Pill Button
     local TabBtn = Instance.new("TextButton")
     TabBtn.Size = UDim2.new(1, 0, 0, 36)
     TabBtn.BackgroundColor3 = Color3.fromRGB(22, 24, 34)
@@ -232,7 +229,6 @@ local function CreateTab(tabName, iconText)
     Tabs[tabName] = TabPage
     TabButtons[tabName] = TabBtn
 
-    -- Elements Component (WindUI Design Exact Matches)
     local Elements = {}
 
     function Elements:AddSection(title)
@@ -302,7 +298,6 @@ local function CreateTab(tabName, iconText)
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = Frame
 
-        -- WindUI Modern Switch Slider
         local SwitchBg = Instance.new("Frame")
         SwitchBg.Size = UDim2.new(0, 44, 0, 22)
         SwitchBg.Position = UDim2.new(1, -56, 0.5, -11)
@@ -389,7 +384,7 @@ local function CreateTab(tabName, iconText)
     return Elements
 end
 
--- Create Pages (WindUI Clean Icons)
+-- Create Pages
 local MainTab = CreateTab("Main", "✦")
 local CharTab = CreateTab("Character", "◈")
 local CombatTab = CreateTab("Combat", "⚔")
@@ -397,12 +392,11 @@ local VisualTab = CreateTab("Visuals", "⦿")
 local ShopTab = CreateTab("Shops", "❖")
 local PlayerTab = CreateTab("Players", "⎔")
 
--- Set Default Active Tab
 TabButtons["Shops"].BackgroundColor3 = Color3.fromRGB(99, 102, 241)
 TabButtons["Shops"].TextColor3 = Color3.fromRGB(255, 255, 255)
 Tabs["Shops"].Visible = true
 
--- [[ FLOATING OPEN BUTTON (WINDUI EXACT EDITOPENBUTTON CLONE) ]] --
+-- [[ FLOATING TOGGLE BUTTON ]] --
 local FloatBtn = Instance.new("TextButton")
 FloatBtn.Name = "TerehubFloatingBtn"
 FloatBtn.Size = UDim2.new(0, 48, 0, 48)
@@ -429,6 +423,241 @@ FloatStroke.Parent = FloatBtn
 
 FloatBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- ================================================================= --
+-- [[ TEREHUB ULTIMATE EXPLORER & REMOTE SPY (DARK DEX + SIMPLESPY) ]] --
+-- ================================================================= --
+
+local function OpenTereExplorer()
+    if ScreenGui:FindFirstChild("TereExplorerWindow") then
+        ScreenGui.TereExplorerWindow.Visible = not ScreenGui.TereExplorerWindow.Visible
+        return
+    end
+
+    local ExpFrame = Instance.new("Frame")
+    ExpFrame.Name = "TereExplorerWindow"
+    ExpFrame.Size = UDim2.new(0, 520, 0, 380)
+    ExpFrame.Position = UDim2.new(0.5, -260, 0.5, -190)
+    ExpFrame.BackgroundColor3 = Color3.fromRGB(14, 15, 21)
+    ExpFrame.BorderSizePixel = 0
+    ExpFrame.ClipsDescendants = true
+    ExpFrame.Parent = ScreenGui
+
+    local ExpCorner = Instance.new("UICorner")
+    ExpCorner.CornerRadius = UDim.new(0, 10)
+    ExpCorner.Parent = ExpFrame
+
+    local ExpStroke = Instance.new("UIStroke")
+    ExpStroke.Color = Color3.fromRGB(129, 140, 248)
+    ExpStroke.Thickness = 1.5
+    ExpStroke.Parent = ExpFrame
+
+    -- Header
+    local ExpTop = Instance.new("Frame")
+    ExpTop.Size = UDim2.new(1, 0, 0, 40)
+    ExpTop.BackgroundColor3 = Color3.fromRGB(20, 22, 30)
+    ExpTop.Parent = ExpFrame
+
+    local ExpTitle = Instance.new("TextLabel")
+    ExpTitle.Size = UDim2.new(0.7, 0, 1, 0)
+    ExpTitle.Position = UDim2.new(0, 12, 0, 0)
+    ExpTitle.BackgroundTransparency = 1
+    ExpTitle.Text = "Terehub <font color='#818CF8'>Explorer & Remote Spy</font>"
+    ExpTitle.RichText = true
+    ExpTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ExpTitle.Font = Enum.Font.GothamBold
+    ExpTitle.TextSize = 13
+    ExpTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ExpTitle.Parent = ExpTop
+
+    local ExpClose = Instance.new("TextButton")
+    ExpClose.Size = UDim2.new(0, 26, 0, 26)
+    ExpClose.Position = UDim2.new(1, -32, 0, 7)
+    ExpClose.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
+    ExpClose.Text = "X"
+    ExpClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ExpClose.Font = Enum.Font.GothamBold
+    ExpClose.TextSize = 12
+    ExpClose.Parent = ExpTop
+
+    local ExpCloseCorner = Instance.new("UICorner")
+    ExpCloseCorner.CornerRadius = UDim.new(0, 6)
+    ExpCloseCorner.Parent = ExpClose
+
+    ExpClose.MouseButton1Click:Connect(function() ExpFrame.Visible = false end)
+
+    -- Draggable
+    local expDrag, expStart, expPosStart
+    ExpTop.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            expDrag = true
+            expStart = input.Position
+            expPosStart = ExpFrame.Position
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if expDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - expStart
+            ExpFrame.Position = UDim2.new(expPosStart.X.Scale, expPosStart.X.Offset + delta.X, expPosStart.Y.Scale, expPosStart.Y.Offset + delta.Y)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            expDrag = false
+        end
+    end)
+
+    -- Search Box
+    local SearchBox = Instance.new("TextBox")
+    SearchBox.Size = UDim2.new(1, -24, 0, 30)
+    SearchBox.Position = UDim2.new(0, 12, 0, 48)
+    SearchBox.BackgroundColor3 = Color3.fromRGB(24, 27, 38)
+    SearchBox.PlaceholderText = "🔍 Cari nama PlayerGui, RemoteEvent, atau Object..."
+    SearchBox.PlaceholderColor3 = Color3.fromRGB(140, 145, 165)
+    SearchBox.Text = ""
+    SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SearchBox.Font = Enum.Font.Gotham
+    SearchBox.TextSize = 12
+    SearchBox.Parent = ExpFrame
+
+    local SearchCorner = Instance.new("UICorner")
+    SearchCorner.CornerRadius = UDim.new(0, 6)
+    SearchCorner.Parent = SearchBox
+
+    -- Log Scroll List
+    local ScrollList = Instance.new("ScrollingFrame")
+    ScrollList.Size = UDim2.new(1, -24, 1, -90)
+    ScrollList.Position = UDim2.new(0, 12, 0, 84)
+    ScrollList.BackgroundTransparency = 1
+    ScrollList.ScrollBarThickness = 4
+    ScrollList.ScrollBarImageColor3 = Color3.fromRGB(129, 140, 248)
+    ScrollList.Parent = ExpFrame
+
+    local ListLayout = Instance.new("UIListLayout")
+    ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ListLayout.Padding = UDim.new(0, 5)
+    ListLayout.Parent = ScrollList
+
+    local function AddLogItem(name, pathStr, objType, onCopy)
+        local ItemFrame = Instance.new("Frame")
+        ItemFrame.Size = UDim2.new(1, 0, 0, 36)
+        ItemFrame.BackgroundColor3 = Color3.fromRGB(24, 27, 38)
+        ItemFrame.Parent = ScrollList
+
+        local ItemCorner = Instance.new("UICorner")
+        ItemCorner.CornerRadius = UDim.new(0, 6)
+        ItemCorner.Parent = ItemFrame
+
+        local TypeLabel = Instance.new("TextLabel")
+        TypeLabel.Size = UDim2.new(0, 60, 0, 20)
+        TypeLabel.Position = UDim2.new(0, 8, 0.5, -10)
+        TypeLabel.BackgroundColor3 = Color3.fromRGB(99, 102, 241)
+        TypeLabel.Text = objType
+        TypeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TypeLabel.Font = Enum.Font.GothamBold
+        TypeLabel.TextSize = 10
+        TypeLabel.Parent = ItemFrame
+
+        local TypeCorner = Instance.new("UICorner")
+        TypeCorner.CornerRadius = UDim.new(0, 4)
+        TypeCorner.Parent = TypeLabel
+
+        local NameLabel = Instance.new("TextLabel")
+        NameLabel.Size = UDim2.new(1, -150, 0, 18)
+        NameLabel.Position = UDim2.new(0, 74, 0, 2)
+        NameLabel.BackgroundTransparency = 1
+        NameLabel.Text = name
+        NameLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
+        NameLabel.Font = Enum.Font.GothamMedium
+        NameLabel.TextSize = 12
+        NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        NameLabel.Parent = ItemFrame
+
+        local PathLabel = Instance.new("TextLabel")
+        PathLabel.Size = UDim2.new(1, -150, 0, 14)
+        PathLabel.Position = UDim2.new(0, 74, 0, 20)
+        PathLabel.BackgroundTransparency = 1
+        PathLabel.Text = pathStr
+        PathLabel.TextColor3 = Color3.fromRGB(140, 145, 165)
+        PathLabel.Font = Enum.Font.Gotham
+        PathLabel.TextSize = 10
+        PathLabel.TextXAlignment = Enum.TextXAlignment.Left
+        PathLabel.Parent = ItemFrame
+
+        local CopyBtn = Instance.new("TextButton")
+        CopyBtn.Size = UDim2.new(0, 60, 0, 24)
+        CopyBtn.Position = UDim2.new(1, -66, 0.5, -12)
+        CopyBtn.BackgroundColor3 = Color3.fromRGB(40, 45, 62)
+        CopyBtn.Text = "COPY"
+        CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        CopyBtn.Font = Enum.Font.GothamBold
+        CopyBtn.TextSize = 10
+        CopyBtn.Parent = ItemFrame
+
+        local CopyCorner = Instance.new("UICorner")
+        CopyCorner.CornerRadius = UDim.new(0, 4)
+        CopyCorner.Parent = CopyBtn
+
+        CopyBtn.MouseButton1Click:Connect(function()
+            if setclipboard then
+                setclipboard(onCopy or pathStr)
+                CopyBtn.Text = "COPIED!"
+                task.wait(1)
+                CopyBtn.Text = "COPY"
+            end
+        end)
+    end
+
+    -- Initial Population: Scan PlayerGui & Remotes
+    local function PopulateExplorer(filter)
+        for _, child in pairs(ScrollList:GetChildren()) do
+            if child:IsA("Frame") then child:Destroy() end
+        end
+
+        filter = string.lower(filter or "")
+
+        -- Scan PlayerGui
+        local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if pGui then
+            for _, gui in pairs(pGui:GetDescendants()) do
+                if gui:IsA("GuiObject") or gui:IsA("ScreenGui") then
+                    local gName = gui.Name
+                    local gPath = gui:GetFullName()
+                    if filter == "" or string.find(string.lower(gName), filter) or string.find(string.lower(gPath), filter) then
+                        AddLogItem(gName, gPath, gui.ClassName, gPath)
+                    end
+                end
+            end
+        end
+
+        -- Scan Remotes (ReplicatedStorage)
+        for _, remote in pairs(game.ReplicatedStorage:GetDescendants()) do
+            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
+                local rName = remote.Name
+                local rPath = remote:GetFullName()
+                if filter == "" or string.find(string.lower(rName), filter) or string.find(string.lower(rPath), filter) then
+                    local code = string.format("game:GetService(\"ReplicatedStorage\").%s:%s()", rPath:gsub("ReplicatedStorage%.", ""), remote:IsA("RemoteEvent") and "FireServer" or "InvokeServer")
+                    AddLogItem(rName, rPath, "REMOTE", code)
+                end
+            end
+        end
+    end
+
+    PopulateExplorer()
+
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        PopulateExplorer(SearchBox.Text)
+    end)
+end
+
+-- Add Button to Open TereExplorer in ShopTab
+ShopTab:AddSection("Built-in Dark Dex & Remote Spy")
+
+ShopTab:AddButton("Launch TereExplorer & Remote Spy (Bawaan)", function()
+    OpenTereExplorer()
 end)
 
 -- [[ SHOPS TAB FEATURES ]] --
@@ -583,4 +812,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("Terehub WindUI Clone: Successfully Loaded!")
+print("Terehub Ultimate Explorer & Remote Spy: Successfully Loaded!")
