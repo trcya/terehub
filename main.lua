@@ -70,6 +70,19 @@ local ShopTab = Window:Tab({ Title = "Shops", Icon = "shopping-cart" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
 -- [[ SHOPS: REMOTE MAPSHOPS OPENER & BUY ALL ]] --
+ShopTab:Section({ Title = "Developer Tools & SimpleSpy" })
+
+ShopTab:Button({
+    Title = "Launch SimpleSpy v3",
+    Desc = "Menjalankan SimpleSpy v3 untuk me-remote spy RemoteEvent/Function pembelian & restock",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ex-serum/SimpleSpy-v3/main/src/source.lua"))()
+            Window:Notify({ Title = "SimpleSpy", Content = "SimpleSpy v3 Berhasil Dimuat!", Duration = 3 })
+        end)
+    end
+})
+
 ShopTab:Section({ Title = "MapShops (Khusus Dex GUI)" })
 
 ShopTab:Button({
@@ -153,6 +166,51 @@ ShopTab:Toggle({
     Desc = "Membeli semua item di MapShops secara terus menerus",
     Callback = function(state)
         autoBuyAllShops = state
+    end
+})
+
+local catchRestockToggle = false
+local restockConn = nil
+
+ShopTab:Toggle({
+    Title = "Catch Restock Time & Auto Buy",
+    Desc = "Mendeteksi waktu Restock di UI MapShops dan otomatis beli saat 00:00 / Restock",
+    Callback = function(state)
+        catchRestockToggle = state
+        if state then
+            Window:Notify({ Title = "Restock Tracker", Content = "Memantau waktu Restock...", Duration = 3 })
+            pcall(function()
+                local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                local mapShops = pGui and pGui:FindFirstChild("MapShops")
+                local timerLabel = mapShops and mapShops:FindFirstChild("Main") and (mapShops.Main:FindFirstChild("Timer") or mapShops.Main:FindFirstChild("RestockTime") or mapShops.Main:FindFirstChildWhichIsA("TextLabel", true))
+                
+                if timerLabel and timerLabel:IsA("TextLabel") then
+                    restockConn = timerLabel:GetPropertyChangedSignal("Text"):Connect(function()
+                        if not catchRestockToggle then return end
+                        local tText = string.lower(timerLabel.Text)
+                        if string.find(tText, "00:00") or string.find(tText, "restock") or string.find(tText, "0s") then
+                            Window:Notify({ Title = "RESTOCK!", Content = "Shop Restock terdeteksi! Membeli semua item...", Duration = 3 })
+                            local holder = mapShops.Main:FindFirstChild("Holder")
+                            if holder then
+                                for _, itemFrame in pairs(holder:GetChildren()) do
+                                    if itemFrame:IsA("GuiObject") then
+                                        local buyBtn = itemFrame:FindFirstChild("Buy") or itemFrame:FindFirstChildWhichIsA("TextButton") or itemFrame
+                                        if firesignal and buyBtn then
+                                            pcall(function() firesignal(buyBtn.MouseButton1Click) end)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                end
+            end)
+        else
+            if restockConn then
+                restockConn:Disconnect()
+                restockConn = nil
+            end
+        end
     end
 })
 
