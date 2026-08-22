@@ -69,79 +69,132 @@ local VisualTab = Window:Tab({ Title = "Visuals", Icon = "eye" })
 local ShopTab = Window:Tab({ Title = "Shops", Icon = "shopping-cart" })
 local PlayerTab = Window:Tab({ Title = "Players", Icon = "users" })
 
--- [[ SHOPS: REMOTE MAPSHOPS OPENER ]] --
-ShopTab:Section({ Title = "Remote MapShops" })
+-- [[ SHOPS: REMOTE MAPSHOPS OPENER & BUY ALL ]] --
+ShopTab:Section({ Title = "MapShops (Khusus Dex GUI)" })
 
 ShopTab:Button({
-    Title = "Open MapShops GUI (Remote)",
-    Desc = "Membuka tampilan GUI MapShops dari jarak jauh",
+    Title = "Buka MapShops GUI (Bypass Jarak)",
+    Desc = "Langsung memunculkan PlayerGui.MapShops.Main dari mana saja",
     Callback = function()
         pcall(function()
             local pGui = LocalPlayer:FindFirstChild("PlayerGui")
-            if pGui then
-                local opened = false
-                for _, gui in pairs(pGui:GetChildren()) do
-                    local n = string.lower(gui.Name)
-                    if string.find(n, "mapshop") or string.find(n, "shop") or string.find(n, "store") or string.find(n, "merchant") or string.find(n, "vendor") then
-                        gui.Enabled = true
-                        for _, desc in pairs(gui:GetDescendants()) do
-                            if desc:IsA("Frame") or desc:IsA("GuiObject") then
-                                desc.Visible = true
-                            end
-                        end
-                        opened = true
-                    end
+            local mapShops = pGui and pGui:FindFirstChild("MapShops")
+            
+            if mapShops then
+                mapShops.Enabled = true
+                if mapShops:FindFirstChild("Main") then
+                    mapShops.Main.Visible = true
                 end
-                if opened then
-                    Window:Notify({ Title = "MapShops", Content = "GUI MapShops berhasil dibuka!", Duration = 3 })
-                else
-                    Window:Notify({ Title = "MapShops", Content = "GUI tidak ditemukan di PlayerGui. Mencoba memicu Remote Prompt...", Duration = 3 })
-                end
+                Window:Notify({ Title = "MapShops", Content = "MapShops GUI Berhasil Dibuka!", Duration = 3 })
+            else
+                Window:Notify({ Title = "MapShops", Content = "MapShops GUI tidak ditemukan di PlayerGui!", Duration = 3 })
             end
         end)
     end
 })
 
 ShopTab:Button({
-    Title = "Remote Interact MapShops (Bypass Jarak)",
-    Desc = "Interaksi ProximityPrompt MapShops dari jarak jauh tanpa teleport",
+    Title = "Buy All Items (Beli Semua Dice/Item)",
+    Desc = "Membeli otomatis semua item (Abyssal, Arcane, Bronze, Celestial, Crystal, Demonic, dll)",
     Callback = function()
         pcall(function()
-            local count = 0
-            for _, prompt in pairs(workspace:GetDescendants()) do
-                if prompt:IsA("ProximityPrompt") then
-                    local pName = string.lower(prompt.Parent.Name)
-                    local actText = string.lower(prompt.ActionText)
-                    local objText = string.lower(prompt.ObjectText)
-                    
-                    if string.find(pName, "mapshop") or string.find(pName, "shop") or string.find(pName, "merchant") or string.find(pName, "vendor") or string.find(actText, "shop") or string.find(actText, "buy") or string.find(objText, "shop") then
-                        prompt.MaxActivationDistance = 999999
-                        prompt.RequiresLineOfSight = false
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            local mapShops = pGui and pGui:FindFirstChild("MapShops")
+            local holder = mapShops and mapShops:FindFirstChild("Main") and mapShops.Main:FindFirstChild("Holder")
+            
+            if holder then
+                local count = 0
+                for _, itemFrame in pairs(holder:GetChildren()) do
+                    if itemFrame:IsA("GuiObject") then
+                        -- 1. Klik tombol beli di dalam itemFrame jika ada
+                        local buyBtn = itemFrame:FindFirstChild("Buy") or itemFrame:FindFirstChild("Purchase") or itemFrame:FindFirstChildWhichIsA("TextButton") or itemFrame:FindFirstChildWhichIsA("ImageButton")
+                        local targetClick = buyBtn or itemFrame
                         
-                        if fireproximityprompt then
-                            fireproximityprompt(prompt)
-                        else
-                            prompt:InputHoldBegin()
-                            task.wait(prompt.HoldDuration + 0.05)
-                            prompt:InputHoldEnd()
+                        if firesignal and targetClick then
+                            pcall(function() firesignal(targetClick.MouseButton1Click) end)
+                            pcall(function() firesignal(targetClick.Activated) end)
+                        end
+                        
+                        if getconnections and targetClick then
+                            for _, conn in pairs(getconnections(targetClick.MouseButton1Click) or {}) do
+                                pcall(function() conn:Fire() end)
+                            end
+                        end
+                        
+                        -- 2. Panggil RemoteEvent jika game menggunakan Remote
+                        for _, remote in pairs(game.ReplicatedStorage:GetDescendants()) do
+                            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
+                                local rName = string.lower(remote.Name)
+                                if string.find(rName, "buy") or string.find(rName, "purchase") or string.find(rName, "shop") or string.find(rName, "dice") then
+                                    pcall(function()
+                                        if remote:IsA("RemoteEvent") then
+                                            remote:FireServer(itemFrame.Name)
+                                        elseif remote:IsA("RemoteFunction") then
+                                            remote:InvokeServer(itemFrame.Name)
+                                        end
+                                    end)
+                                end
+                            end
                         end
                         count = count + 1
                     end
                 end
+                Window:Notify({ Title = "Buy All", Content = "Mencoba membeli " .. tostring(count) .. " jenis item di MapShops!", Duration = 3 })
+            else
+                Window:Notify({ Title = "Buy All", Content = "Holder MapShops tidak ditemukan!", Duration = 3 })
             end
-            Window:Notify({ Title = "MapShops", Content = "Memicu " .. tostring(count) .. " Shop Prompt dari jauh!", Duration = 3 })
         end)
     end
 })
 
-local infShopDistance = false
+local autoBuyAllShops = false
 ShopTab:Toggle({
-    Title = "Infinite Distance MapShops Prompts",
-    Desc = "Membuat semua Prompt Toko/MapShops bisa diakses dari mana saja",
+    Title = "Auto Buy All (Loop)",
+    Desc = "Membeli semua item di MapShops secara terus menerus",
     Callback = function(state)
-        infShopDistance = state
+        autoBuyAllShops = state
     end
 })
+
+task.spawn(function()
+    while true do
+        if autoBuyAllShops then
+            pcall(function()
+                local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                local mapShops = pGui and pGui:FindFirstChild("MapShops")
+                local holder = mapShops and mapShops:FindFirstChild("Main") and mapShops.Main:FindFirstChild("Holder")
+                
+                if holder then
+                    for _, itemFrame in pairs(holder:GetChildren()) do
+                        if itemFrame:IsA("GuiObject") then
+                            local buyBtn = itemFrame:FindFirstChild("Buy") or itemFrame:FindFirstChild("Purchase") or itemFrame:FindFirstChildWhichIsA("TextButton") or itemFrame:FindFirstChildWhichIsA("ImageButton")
+                            local targetClick = buyBtn or itemFrame
+                            
+                            if firesignal and targetClick then
+                                pcall(function() firesignal(targetClick.MouseButton1Click) end)
+                                pcall(function() firesignal(targetClick.Activated) end)
+                            end
+                            
+                            for _, remote in pairs(game.ReplicatedStorage:GetDescendants()) do
+                                if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
+                                    local rName = string.lower(remote.Name)
+                                    if string.find(rName, "buy") or string.find(rName, "purchase") or string.find(rName, "shop") or string.find(rName, "dice") then
+                                        pcall(function()
+                                            if remote:IsA("RemoteEvent") then
+                                                remote:FireServer(itemFrame.Name)
+                                            end
+                                        end)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+        task.wait(1)
+    end
+end)
 
 task.spawn(function()
     while true do
