@@ -195,6 +195,48 @@ ShopTab:Toggle({
 local catchRestockToggle = false
 local restockConn = nil
 
+ShopTab:Section({ Title = "Live Restock Timer Status" })
+
+local RestockParagraph = ShopTab:Paragraph({
+    Title = "Restock Countdown",
+    Content = "Mencari status timer restock di game..."
+})
+
+-- Task khusus untuk membaca dan mengupdate teks timer restock di UI Hub secara Real-Time
+task.spawn(function()
+    while true do
+        pcall(function()
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            local mapShops = pGui and pGui:FindFirstChild("MapShops")
+            local mainFrame = mapShops and mapShops:FindFirstChild("Main")
+            
+            -- Cari TextLabel timer di MapShops GUI
+            local timerLabel = mainFrame and (mainFrame:FindFirstChild("Timer") or mainFrame:FindFirstChild("RestockTime") or mainFrame:FindFirstChildWhichIsA("TextLabel", true))
+            
+            -- Atau cari di ReplicatedStorage / Workspace jika disimpan di situ
+            local repTimer = game.ReplicatedStorage:FindFirstChild("RestockTime") or game.ReplicatedStorage:FindFirstChild("DiceTimer") or game.ReplicatedStorage:FindFirstChild("PotionTimer")
+            
+            if timerLabel and timerLabel:IsA("TextLabel") and timerLabel.Text ~= "" then
+                RestockParagraph:Set({
+                    Title = "Restock Countdown",
+                    Content = "Waktu Restock Saat Ini: " .. tostring(timerLabel.Text)
+                })
+            elseif repTimer then
+                RestockParagraph:Set({
+                    Title = "Restock Countdown",
+                    Content = "Waktu Restock (Value): " .. tostring(repTimer.Value)
+                })
+            else
+                RestockParagraph:Set({
+                    Title = "Restock Countdown",
+                    Content = "Status Shop: Memantau restock (Buka MapShops GUI untuk update presisi)"
+                })
+            end
+        end)
+        task.wait(1)
+    end
+end)
+
 ShopTab:Toggle({
     Title = "Catch Restock Time & Auto Buy",
     Desc = "Mendeteksi waktu Restock di UI MapShops dan otomatis beli saat 00:00 / Restock",
