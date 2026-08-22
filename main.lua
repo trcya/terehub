@@ -48,6 +48,12 @@ local Window = WindUI:CreateWindow({
     Size = UDim2.fromOffset(600, 420),
     Transparent = false, -- Changed to false for better visibility
     Theme = "Indigo",
+    OpenButton = {
+        Title = "Terehub",
+        Icon = "rbxassetid://136360402262473",
+        Enabled = true,
+        Draggable = true,
+    },
 })
 
 -- [[ TABS ]] --
