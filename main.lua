@@ -142,55 +142,43 @@ ShopTab:Button({
 })
 
 ShopTab:Button({
-    Title = "Buy All Items (Beli Semua Dice/Item)",
-    Desc = "Membeli otomatis semua item (Abyssal, Arcane, Bronze, Celestial, Crystal, Demonic, dll)",
+    Title = "Buy All Items (Direct Remote Buy)",
+    Desc = "Membeli otomatis semua Dice & Potion secara langsung via RemoteEvent game",
     Callback = function()
         pcall(function()
+            local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+            local buyDice = remotes and remotes:FindFirstChild("BuyDice")
+            local buyPotion = remotes and remotes:FindFirstChild("BuyPotion")
+            local purchase = remotes and remotes:FindFirstChild("Purchase")
+            
             local pGui = LocalPlayer:FindFirstChild("PlayerGui")
             local mapShops = pGui and pGui:FindFirstChild("MapShops")
             local holder = mapShops and mapShops:FindFirstChild("Main") and mapShops.Main:FindFirstChild("Holder")
             
+            local boughtCount = 0
+            
+            -- Method 1: Tembak dari item di Holder MapShops
             if holder then
-                local count = 0
                 for _, itemFrame in pairs(holder:GetChildren()) do
                     if itemFrame:IsA("GuiObject") then
-                        -- 1. Klik tombol beli di dalam itemFrame jika ada
-                        local buyBtn = itemFrame:FindFirstChild("Buy") or itemFrame:FindFirstChild("Purchase") or itemFrame:FindFirstChildWhichIsA("TextButton") or itemFrame:FindFirstChildWhichIsA("ImageButton")
-                        local targetClick = buyBtn or itemFrame
-                        
-                        if firesignal and targetClick then
-                            pcall(function() firesignal(targetClick.MouseButton1Click) end)
-                            pcall(function() firesignal(targetClick.Activated) end)
-                        end
-                        
-                        if getconnections and targetClick then
-                            for _, conn in pairs(getconnections(targetClick.MouseButton1Click) or {}) do
-                                pcall(function() conn:Fire() end)
-                            end
-                        end
-                        
-                        -- 2. Panggil RemoteEvent jika game menggunakan Remote
-                        for _, remote in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction") then
-                                local rName = string.lower(remote.Name)
-                                if string.find(rName, "buy") or string.find(rName, "purchase") or string.find(rName, "shop") or string.find(rName, "dice") then
-                                    pcall(function()
-                                        if remote:IsA("RemoteEvent") then
-                                            remote:FireServer(itemFrame.Name)
-                                        elseif remote:IsA("RemoteFunction") then
-                                            remote:InvokeServer(itemFrame.Name)
-                                        end
-                                    end)
-                                end
-                            end
-                        end
-                        count = count + 1
+                        local itemName = itemFrame.Name
+                        if buyDice then pcall(function() buyDice:FireServer(itemName) end) end
+                        if buyPotion then pcall(function() buyPotion:FireServer(itemName) end) end
+                        if purchase then pcall(function() purchase:FireServer(itemName) end) end
+                        boughtCount = boughtCount + 1
                     end
                 end
-                Window:Notify({ Title = "Buy All", Content = "Mencoba membeli " .. tostring(count) .. " jenis item di MapShops!", Duration = 3 })
-            else
-                Window:Notify({ Title = "Buy All", Content = "Holder MapShops tidak ditemukan!", Duration = 3 })
             end
+            
+            -- Method 2: Daftar Item Umum Kawaii Anime RNG (Fallback jika Holder tidak kebuka)
+            local defaultItems = {"Abyssal", "Arcane", "Bronze", "Celestial", "Crystal", "Demonic", "Dice", "Potion", "Luck Potion", "Speed Potion"}
+            for _, item in ipairs(defaultItems) do
+                if buyDice then pcall(function() buyDice:FireServer(item) end) end
+                if buyPotion then pcall(function() buyPotion:FireServer(item) end) end
+                if purchase then pcall(function() purchase:FireServer(item) end) end
+            end
+            
+            Window:Notify({ Title = "Buy All", Content = "Mencoba membeli semua Dice & Potion via Direct Remotes!", Duration = 3 })
         end)
     end
 })
@@ -198,7 +186,7 @@ ShopTab:Button({
 local autoBuyAllShops = false
 ShopTab:Toggle({
     Title = "Auto Buy All (Loop)",
-    Desc = "Membeli semua item di MapShops secara terus menerus",
+    Desc = "Membeli semua item di MapShops via RemoteEvent secara terus menerus",
     Callback = function(state)
         autoBuyAllShops = state
     end
@@ -225,14 +213,20 @@ ShopTab:Toggle({
                         local tText = string.lower(timerLabel.Text)
                         if string.find(tText, "00:00") or string.find(tText, "restock") or string.find(tText, "0s") then
                             Window:Notify({ Title = "RESTOCK!", Content = "Shop Restock terdeteksi! Membeli semua item...", Duration = 3 })
+                            
+                            local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+                            local buyDice = remotes and remotes:FindFirstChild("BuyDice")
+                            local buyPotion = remotes and remotes:FindFirstChild("BuyPotion")
+                            local purchase = remotes and remotes:FindFirstChild("Purchase")
+                            
                             local holder = mapShops.Main:FindFirstChild("Holder")
                             if holder then
                                 for _, itemFrame in pairs(holder:GetChildren()) do
                                     if itemFrame:IsA("GuiObject") then
-                                        local buyBtn = itemFrame:FindFirstChild("Buy") or itemFrame:FindFirstChildWhichIsA("TextButton") or itemFrame
-                                        if firesignal and buyBtn then
-                                            pcall(function() firesignal(buyBtn.MouseButton1Click) end)
-                                        end
+                                        local itemName = itemFrame.Name
+                                        if buyDice then pcall(function() buyDice:FireServer(itemName) end) end
+                                        if buyPotion then pcall(function() buyPotion:FireServer(itemName) end) end
+                                        if purchase then pcall(function() purchase:FireServer(itemName) end) end
                                     end
                                 end
                             end
