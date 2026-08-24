@@ -38,6 +38,11 @@ local foodCartRestockDone = false
 local merchantSpawnDone = false
 local wheelRestockDone = false
 
+local shopInProgress = false
+local foodCartInProgress = false
+local merchantInProgress = false
+local wheelInProgress = false
+
 -- =========================================================================
 -- HELPER LOCK TELEPORTASI (MUTEX / QUEUE SAFE)
 -- =========================================================================
@@ -79,7 +84,7 @@ local function safeTeleport(targetPosOrCFrame, maxRetries)
     local char = Player.Character
     if not char then return false end
 
-    local root = char:FindFirstChild("HumanoidRootPart")
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
 
     if not root or not humanoid or humanoid.Health <= 0 then
@@ -98,25 +103,23 @@ local function safeTeleport(targetPosOrCFrame, maxRetries)
             if root:IsA("BasePart") then
                 root.AssemblyLinearVelocity = Vector3.zero
                 root.AssemblyAngularVelocity = Vector3.zero
-                root.Anchored = true
             end
             
             char:PivotTo(targetCFrame)
             root.CFrame = targetCFrame
-            task.wait(0.05)
 
             if root:IsA("BasePart") then
-                root.Anchored = false
                 root.AssemblyLinearVelocity = Vector3.zero
                 root.AssemblyAngularVelocity = Vector3.zero
             end
         end)
 
-        -- Distance verification (within 15 studs)
-        if (root.Position - targetPos).Magnitude <= 15 then
+        task.wait(0.08)
+
+        -- Distance verification (within 25 studs)
+        if (root.Position - targetPos).Magnitude <= 25 then
             return true
         end
-        task.wait(0.1)
     end
 
     return false
@@ -289,16 +292,21 @@ local function getObjectPosition(obj)
     local pos = nil
     pcall(function()
         if obj:IsA("Model") then
-            if obj.PrimaryPart then
+            if obj.PrimaryPart and obj.PrimaryPart.Position.Magnitude > 2 then
                 pos = obj.PrimaryPart.Position
             else
-                pos = obj:GetPivot().Position
+                local p = obj:GetPivot().Position
+                if p and p.Magnitude > 2 then
+                    pos = p
+                end
             end
-        elseif obj:IsA("BasePart") then
+        elseif obj:IsA("BasePart") and obj.Position.Magnitude > 2 then
             pos = obj.Position
-        else
+        end
+        
+        if not pos then
             for _, child in ipairs(obj:GetDescendants()) do
-                if child:IsA("BasePart") then
+                if child:IsA("BasePart") and child.Position.Magnitude > 2 then
                     pos = child.Position
                     break
                 end
@@ -832,12 +840,14 @@ task.spawn(function()
                 local shouldDoDice = isDiceReady and not diceRestockDone
                 local shouldDoPotion = isPotionReady and not potionRestockDone
 
-                if shouldDoDice or shouldDoPotion then
+                if (shouldDoDice or shouldDoPotion) and not shopInProgress then
+                    shopInProgress = true
                     task.spawn(function()
                         if executeShopRestockSequence(shouldDoDice, shouldDoPotion) then
                             if shouldDoDice then diceRestockDone = true end
                             if shouldDoPotion then potionRestockDone = true end
                         end
+                        shopInProgress = false
                     end)
                 end
             end
@@ -847,41 +857,50 @@ task.spawn(function()
 
             -- AUTO TP FOOD CART
             if autoTPFoodCartEnabled then
-                if isFoodCartSpawned and not foodCartRestockDone then
+                if isFoodCartSpawned and not foodCartRestockDone and not foodCartInProgress then
+                    foodCartInProgress = true
                     task.spawn(function()
                         if teleportToFoodCartAndRequest() then
                             foodCartRestockDone = true
                         end
+                        foodCartInProgress = false
                     end)
                 elseif not isFoodCartSpawned then
                     foodCartRestockDone = false
+                    foodCartInProgress = false
                 end
             end
 
             -- AUTO TP MERCHANT
             if autoTPMerchantEnabled then
-                if isMerchantSpawnedInWorkspace and not merchantSpawnDone then
+                if isMerchantSpawnedInWorkspace and not merchantSpawnDone and not merchantInProgress then
+                    merchantInProgress = true
                     task.spawn(function()
                         if teleportToMerchantAndBack() then
                             merchantSpawnDone = true
                         end
+                        merchantInProgress = false
                     end)
                 elseif not isMerchantSpawnedInWorkspace then 
-                    merchantSpawnDone = false 
+                    merchantSpawnDone = false
+                    merchantInProgress = false 
                 end
             end
 
             -- AUTO TP WHEEL SPIN
             local isWheelReady = isTimerReady(wheelText)
             if autoTPWheelEnabled then
-                if isWheelReady and not wheelRestockDone then
+                if isWheelReady and not wheelRestockDone and not wheelInProgress then
+                    wheelInProgress = true
                     task.spawn(function()
                         if teleportToWheelAndSpin() then
                             wheelRestockDone = true
                         end
+                        wheelInProgress = false
                     end)
                 elseif not isWheelReady then 
-                    wheelRestockDone = false 
+                    wheelRestockDone = false
+                    wheelInProgress = false 
                 end
             end
         end)
